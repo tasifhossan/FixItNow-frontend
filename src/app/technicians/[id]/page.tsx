@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Star, Calendar, MessageSquare, Wrench, ShieldCheck, UserCheck, AlertCircle, Clock } from 'lucide-react';
+import { ChevronLeft, Star, MessageSquare, Wrench, ShieldCheck, UserCheck, Clock } from 'lucide-react';
 import { getTechnicianById } from '../../../lib/technicians';
 import { getTechnicianReviews } from '../../../lib/reviews';
 import { isAxiosError } from 'axios';
+import TechnicianBookingCTA from '../../../components/TechnicianBookingCTA';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -241,21 +242,11 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Disabled Booking CTA */}
-              <button
-                disabled
-                className="w-full py-4 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-lg text-sm font-bold cursor-not-allowed shadow-none border border-slate-300/10 transition-all flex items-center justify-center gap-1.5"
-              >
-                <Calendar className="h-4.5 w-4.5" /> Book Appointment
-              </button>
-
-              {/* Warning tooltip description */}
-              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 flex gap-2 text-amber-700 dark:text-amber-400">
-                <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-                <p className="text-[10px] leading-relaxed font-medium">
-                  Booking operations require authorization. Please login or register as a **Customer** to coordinate booking schedules.
-                </p>
-              </div>
+              {/* Auth-aware Booking CTA */}
+              <TechnicianBookingCTA
+                technicianId={technician.id}
+                services={technician.services ?? []}
+              />
             </div>
           </div>
 
