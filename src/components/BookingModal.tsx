@@ -1,10 +1,13 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'react-hot-toast';
 import { X, Calendar, MapPin, Wrench, FileText } from 'lucide-react';
+import { createBooking } from '../lib/bookings';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface BookingModalProps {
@@ -53,6 +56,7 @@ export default function BookingModal({
   services,
 }: BookingModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const {
     register,
@@ -85,9 +89,32 @@ export default function BookingModal({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  const onSubmit = (data: BookingFormValues) => {
-    // Task 4 will wire up the real API call; log for now
-    console.log('Booking payload:', { technicianId, ...data });
+  const onSubmit = async (data: BookingFormValues) => {
+    try {
+      await createBooking({
+        technicianId,
+        serviceId: data.serviceId,
+        // datetime-local gives a local-time string without timezone; convert to ISO before sending
+        scheduledDate: new Date(data.scheduledDate).toISOString(),
+        address: data.address,
+        notes: data.notes,
+      });
+
+      toast.success('Booking request sent!');
+      reset();
+      onClose();
+      // TODO: redirect to /dashboard/customer/bookings once Phase 4 creates that route
+      router.push('/dashboard/customer');
+    } catch (error: unknown) {
+      // Match the error-extraction pattern from the auth pages (register/login)
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to create booking. Please try again.';
+      toast.error(errorMessage);
+      // Do not close or reset — let the user fix the input and retry
+    }
   };
 
   const handleClose = () => {
