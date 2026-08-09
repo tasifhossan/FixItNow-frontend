@@ -35,6 +35,14 @@ export const Navbar: React.FC = () => {
             >
               Technicians
             </Link>
+            {user && (
+              <Link
+                href={`/dashboard/${user.role.toLowerCase()}`}
+                className="text-sm font-semibold text-indigo-650 hover:text-indigo-550 dark:text-indigo-400 dark:hover:text-indigo-350 transition-colors duration-200"
+              >
+                Dashboard
+              </Link>
+            )}
           </div>
 
           {/* User actions on the right */}
@@ -64,13 +72,21 @@ export const Navbar: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Logout Button */}
-                <button
-                  onClick={logout}
-                  className="rounded-lg border border-slate-200 dark:border-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  Logout
-                </button>
+                {/* Dashboard & Logout Buttons */}
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/${user.role.toLowerCase()}`}
+                    className="hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-indigo-650 hover:text-indigo-550 dark:text-indigo-400 dark:hover:text-indigo-350 transition-all duration-200"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="rounded-lg border border-slate-200 dark:border-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             ) : (
               // Guest view (login / register)

@@ -17,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   register: (payload: Record<string, unknown>) => Promise<unknown>;
   refreshSession: () => Promise<void>;
@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(token);
       setAccessTokenState(token);
       setUser(loggedInUser);
+      return loggedInUser;
     } catch (error) {
       throw error;
     }
