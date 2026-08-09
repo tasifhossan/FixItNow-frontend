@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { 
   Search, 
@@ -16,10 +14,172 @@ import {
   Sparkles, 
   Hammer, 
   Bug, 
-  Calendar, 
   ArrowRight,
-  StarHalf
+  Wrench,
+  Calendar
 } from 'lucide-react';
+import { getServices } from '../lib/services';
+import { getTechnicians } from '../lib/technicians';
+
+// Helper to resolve service category icons dynamically
+function getServiceIcon(categoryName: string = '') {
+  const name = categoryName.toLowerCase();
+  if (name.includes('plumb')) return <Droplet className="h-7 w-7" />;
+  if (name.includes('elect')) return <Zap className="h-7 w-7" />;
+  if (name.includes('ac') || name.includes('air')) return <Snowflake className="h-7 w-7" />;
+  if (name.includes('appliance') || name.includes('kitchen') || name.includes('fridge')) return <Refrigerator className="h-7 w-7" />;
+  if (name.includes('paint')) return <Paintbrush className="h-7 w-7" />;
+  if (name.includes('clean')) return <Sparkles className="h-7 w-7" />;
+  if (name.includes('carpent') || name.includes('wood')) return <Hammer className="h-7 w-7" />;
+  if (name.includes('pest') || name.includes('bug')) return <Bug className="h-7 w-7" />;
+  return <Wrench className="h-7 w-7" />;
+}
+
+// Skeletons for independent Suspense loading
+function ServicesSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div key={idx} className="glass-card p-6 rounded-xl flex flex-col items-center gap-4 animate-pulse border border-white/40">
+          <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+          <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TechniciansSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, idx) => (
+        <div key={idx} className="glass-card rounded-xl overflow-hidden flex flex-col animate-pulse border border-white/40 text-left">
+          <div className="h-48 bg-slate-200 dark:bg-slate-800" />
+          <div className="p-6 space-y-4">
+            <div className="h-5 w-1/2 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded" />
+            <div className="h-8 w-full bg-slate-200 dark:bg-slate-800 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Sub-components to fetch services and technicians
+async function FeaturedServicesSection() {
+  try {
+    const response = await getServices({ limit: 8 });
+    const services = response.data;
+
+    if (!services || services.length === 0) {
+      return (
+        <div className="text-center text-slate-500 py-12">
+          No services currently available.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {services.map((service) => (
+          <Link 
+            key={service.id}
+            href={`/services/${service.id}`}
+            className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 group border border-white/40"
+          >
+            <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
+              {getServiceIcon(service.category?.name || service.name)}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white line-clamp-1">{service.name}</h3>
+              <p className="text-sm font-semibold text-secondary-container mt-1">From ৳{service.basePrice}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    );
+  } catch {
+    return (
+      <div className="text-center text-red-500 py-12">
+        Unable to load featured services.
+      </div>
+    );
+  }
+}
+
+async function TopRatedTechniciansSection() {
+  try {
+    const response = await getTechnicians({ limit: 6 });
+    const technicians = response.data;
+
+    if (!technicians || technicians.length === 0) {
+      return (
+        <div className="text-center text-slate-500 py-12">
+          No technicians currently listed.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {technicians.slice(0, 6).map((tech) => (
+          <div 
+            key={tech.id}
+            className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 group border border-white/40 text-left"
+          >
+            {/* Technician visual placeholder */}
+            <div className="h-48 overflow-hidden bg-slate-100 dark:bg-slate-900">
+              <img 
+                alt={tech.user?.name || 'Technician'} 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
+              />
+            </div>
+            
+            {/* Content Details */}
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-on-surface">{tech.user?.name}</h3>
+                <p className="text-xs text-primary-container font-bold uppercase tracking-wider mt-1 line-clamp-1">
+                  {tech.skills.join(', ') || 'General Specialist'}
+                </p>
+              </div>
+              <div className="flex items-center gap-0.5 text-secondary-container">
+                <Star className="h-4.5 w-4.5 fill-secondary-container text-secondary-container" />
+                <span className="text-slate-500 dark:text-slate-400 text-xs ml-1 font-semibold">
+                  {tech.averageRating.toFixed(1)} ({tech.totalReviews} reviews)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-8">
+                {tech.bio || 'Professional home service technician committed to providing high-quality work.'}
+              </p>
+              <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                <span className="text-sm font-bold text-slate-800 dark:text-white">
+                  ৳{tech.hourlyRate}/hr
+                </span>
+                <Link 
+                  href={`/technicians/${tech.id}`}
+                  className="px-4 py-2 bg-transparent border border-primary text-primary rounded-lg text-xs font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all"
+                >
+                  View Profile
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } catch {
+    return (
+      <div className="text-center text-red-500 py-12">
+        Unable to load top technicians.
+      </div>
+    );
+  }
+}
 
 export default function Home() {
   return (
@@ -40,17 +200,18 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Search Input Card */}
-            <div className="glass-card p-4 rounded-xl flex flex-col md:flex-row gap-3 w-full max-w-xl shadow-md border border-white/40">
-              <div className="flex-1 flex items-center border border-slate-200 dark:border-slate-800 rounded-lg px-3 bg-white/50 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
+            {/* Search Input Form */}
+            <form action="/services" method="GET" className="glass-card p-4 rounded-xl flex flex-col md:flex-row gap-3 w-full max-w-xl shadow-md border border-white/40">
+              <div className="flex-1 flex items-center border border-slate-200 dark:border-slate-850 rounded-lg px-3 bg-white/50 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
                 <Search className="h-5 w-5 text-slate-400 shrink-0" />
                 <input 
+                  name="searchTerm"
                   className="w-full bg-transparent border-none focus:ring-0 text-on-surface text-sm py-3 px-2 placeholder-slate-400 outline-none" 
                   placeholder="What do you need help with?" 
                   type="text"
                 />
               </div>
-              <div className="flex-1 flex items-center border border-slate-200 dark:border-slate-800 rounded-lg px-3 bg-white/50 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
+              <div className="flex-1 flex items-center border border-slate-200 dark:border-slate-850 rounded-lg px-3 bg-white/50 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
                 <MapPin className="h-5 w-5 text-slate-400 shrink-0" />
                 <input 
                   className="w-full bg-transparent border-none focus:ring-0 text-on-surface text-sm py-3 px-2 placeholder-slate-400 outline-none" 
@@ -58,21 +219,22 @@ export default function Home() {
                   type="text"
                 />
               </div>
-            </div>
+            </form>
             
             {/* Call to Actions */}
             <div className="flex flex-wrap gap-stack-sm mt-2">
               <Link 
-                href="/auth/register"
+                href="/services"
                 className="px-8 py-4 bg-secondary-container text-on-secondary-container hover:brightness-110 active:scale-95 rounded-lg text-sm font-bold shadow-md transition-all flex items-center justify-center min-h-[48px]"
               >
-                Book a Service
+                Browse Services
               </Link>
-              <button 
-                className="px-8 py-4 bg-transparent border border-primary text-primary hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 rounded-lg text-sm font-bold transition-all min-h-[48px]"
+              <Link 
+                href="/technicians"
+                className="px-8 py-4 bg-transparent border border-primary text-primary hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 rounded-lg text-sm font-bold transition-all flex items-center justify-center min-h-[48px]"
               >
-                Browse Technicians
-              </button>
+                Find a Technician
+              </Link>
             </div>
           </div>
 
@@ -91,32 +253,32 @@ export default function Home() {
       {/* Trust Bar Section */}
       <section className="glass-panel py-6 relative z-10 border-y border-white/40 shadow-sm">
         <div className="max-w-container-max mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-left">
             <CheckCircle2 className="h-8 w-8 text-primary shrink-0" />
-            <div className="text-left">
+            <div>
               <p className="text-2xl font-bold text-primary leading-tight">10,000+</p>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Verified Pros</p>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Verified Pros</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-left">
             <CheckCircle2 className="h-8 w-8 text-primary shrink-0" />
-            <div className="text-left">
+            <div>
               <p className="text-2xl font-bold text-primary leading-tight">50k+</p>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Jobs Done</p>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Jobs Done</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-left">
             <Star className="h-8 w-8 text-secondary-container fill-secondary-container shrink-0" />
-            <div className="text-left">
+            <div>
               <p className="text-2xl font-bold text-primary leading-tight">4.9/5</p>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Avg Rating</p>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Avg Rating</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-left">
             <Building2 className="h-8 w-8 text-primary shrink-0" />
-            <div className="text-left">
+            <div>
               <p className="text-2xl font-bold text-primary leading-tight">20+</p>
-              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cities Covered</p>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Cities Covered</p>
             </div>
           </div>
         </div>
@@ -127,109 +289,21 @@ export default function Home() {
         <div className="max-w-container-max mx-auto flex flex-col gap-12">
           <div className="flex flex-col gap-2 items-center text-center">
             <h2 className="text-3xl font-bold text-primary tracking-tight">Popular Services</h2>
-            <p className="text-slate-505 dark:text-slate-400">Find the right professional for your specific needs.</p>
+            <p className="text-slate-500 dark:text-slate-400">Find the right professional for your specific needs.</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            
-            {/* Plumbing */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Droplet className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Plumbing</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳500</p>
-              </div>
-            </div>
-
-            {/* Electrical */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Zap className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Electrical</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳400</p>
-              </div>
-            </div>
-
-            {/* AC Repair */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Snowflake className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">AC Repair</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳800</p>
-              </div>
-            </div>
-
-            {/* Appliance Repair */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Refrigerator className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Appliance Repair</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳600</p>
-              </div>
-            </div>
-
-            {/* Painting */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Paintbrush className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Painting</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳1000</p>
-              </div>
-            </div>
-
-            {/* Cleaning */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Sparkles className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Cleaning</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳700</p>
-              </div>
-            </div>
-
-            {/* Carpentry */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Hammer className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Carpentry</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳500</p>
-              </div>
-            </div>
-
-            {/* Pest Control */}
-            <div className="glass-card p-6 rounded-xl flex flex-col items-center text-center gap-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer group border border-white/40">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-white transition-colors duration-250">
-                <Bug className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Pest Control</h3>
-                <p className="text-sm font-semibold text-secondary-container mt-1">From ৳800</p>
-              </div>
-            </div>
-
-          </div>
+          <Suspense fallback={<ServicesSkeleton />}>
+            <FeaturedServicesSection />
+          </Suspense>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-primary-container/5 relative">
+      <section id="how-it-works" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-primary-container/5 relative">
         <div className="max-w-container-max mx-auto flex flex-col gap-12">
           <div className="flex flex-col gap-2 items-center text-center">
             <h2 className="text-3xl font-bold text-primary tracking-tight">How It Works</h2>
-            <p className="text-slate-505 dark:text-slate-400">Getting your home fixed is as easy as 1-2-3.</p>
+            <p className="text-slate-500 dark:text-slate-400">Getting your home fixed is as easy as 1-2-3.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
@@ -274,128 +348,16 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row justify-between items-end gap-4 border-b border-slate-200/50 dark:border-slate-800 pb-6">
             <div className="text-left">
               <h2 className="text-3xl font-bold text-primary tracking-tight">Top-Rated Pros</h2>
-              <p className="text-slate-505 dark:text-slate-400 mt-1">Meet our highest rated professionals in your area.</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">Meet our highest rated professionals in your area.</p>
             </div>
-            <button className="text-primary-container font-bold text-sm hover:text-primary transition-colors flex items-center gap-1">
+            <Link href="/technicians" className="text-primary-container font-bold text-sm hover:text-primary transition-colors flex items-center gap-1">
               View All Pros <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            {/* Tech Card 1 */}
-            <div className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 group border border-white/40">
-              <div className="h-48 overflow-hidden">
-                <img 
-                  alt="Mike Johnson" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
-                />
-              </div>
-              <div className="p-6 flex flex-col gap-4 text-left">
-                <div>
-                  <h3 className="text-lg font-bold text-on-surface">Mike Johnson</h3>
-                  <p className="text-xs text-primary-container font-bold uppercase tracking-wider mt-1">Master Electrician</p>
-                </div>
-                <div className="flex items-center gap-0.5 text-secondary-container">
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <StarHalf className="h-4.5 w-4.5 fill-secondary-container" />
-                  <span className="text-slate-450 text-xs ml-1 font-semibold">4.9 (120 reviews)</span>
-                </div>
-                <button className="mt-2 w-full py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all outline-none">
-                  View Profile
-                </button>
-              </div>
-            </div>
-
-            {/* Tech Card 2 */}
-            <div className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 group border border-white/40">
-              <div className="h-48 overflow-hidden">
-                <img 
-                  alt="Sarah Lee" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
-                />
-              </div>
-              <div className="p-6 flex flex-col gap-4 text-left">
-                <div>
-                  <h3 className="text-lg font-bold text-on-surface">Sarah Lee</h3>
-                  <p className="text-xs text-primary-container font-bold uppercase tracking-wider mt-1">Expert Plumber</p>
-                </div>
-                <div className="flex items-center gap-0.5 text-secondary-container">
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <span className="text-slate-450 text-xs ml-1 font-semibold">5.0 (95 reviews)</span>
-                </div>
-                <button className="mt-2 w-full py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all outline-none">
-                  View Profile
-                </button>
-              </div>
-            </div>
-
-            {/* Tech Card 3 */}
-            <div className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 group border border-white/40">
-              <div className="h-48 overflow-hidden bg-slate-100">
-                <img 
-                  alt="David Chen" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
-                />
-              </div>
-              <div className="p-6 flex flex-col gap-4 text-left">
-                <div>
-                  <h3 className="text-lg font-bold text-on-surface">David Chen</h3>
-                  <p className="text-xs text-primary-container font-bold uppercase tracking-wider mt-1">HVAC Specialist</p>
-                </div>
-                <div className="flex items-center gap-0.5 text-secondary-container">
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 text-slate-200 dark:text-slate-700" />
-                  <span className="text-slate-450 text-xs ml-1 font-semibold">4.0 (42 reviews)</span>
-                </div>
-                <button className="mt-2 w-full py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all outline-none">
-                  View Profile
-                </button>
-              </div>
-            </div>
-
-            {/* Tech Card 4 */}
-            <div className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300 group border border-white/40">
-              <div className="h-48 overflow-hidden">
-                <img 
-                  alt="Elena Rodriguez" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
-                />
-              </div>
-              <div className="p-6 flex flex-col gap-4 text-left">
-                <div>
-                  <h3 className="text-lg font-bold text-on-surface">Elena Rodriguez</h3>
-                  <p className="text-xs text-primary-container font-bold uppercase tracking-wider mt-1">Appliance Repair</p>
-                </div>
-                <div className="flex items-center gap-0.5 text-secondary-container">
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <Star className="h-4.5 w-4.5 fill-secondary-container" />
-                  <StarHalf className="h-4.5 w-4.5 fill-secondary-container" />
-                  <span className="text-slate-450 text-xs ml-1 font-semibold">4.8 (210 reviews)</span>
-                </div>
-                <button className="mt-2 w-full py-2 border border-primary text-primary rounded-lg text-sm font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all outline-none">
-                  View Profile
-                </button>
-              </div>
-            </div>
-
-          </div>
+          <Suspense fallback={<TechniciansSkeleton />}>
+            <TopRatedTechniciansSection />
+          </Suspense>
         </div>
       </section>
 
@@ -404,7 +366,7 @@ export default function Home() {
         <div className="max-w-container-max mx-auto flex flex-col gap-12">
           <div className="flex flex-col gap-2 items-center text-center">
             <h2 className="text-3xl font-bold text-primary tracking-tight">What Our Customers Say</h2>
-            <p className="text-slate-505 dark:text-slate-400">Real reviews from people who found reliable help through FixItNow.</p>
+            <p className="text-slate-500 dark:text-slate-400">Real reviews from people who found reliable help through FixItNow.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -412,11 +374,11 @@ export default function Home() {
             {/* Testimonial 1 */}
             <div className="glass-card p-8 rounded-xl flex flex-col gap-6 text-left border border-white/40">
               <div className="flex items-center gap-0.5 text-secondary-container">
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
               </div>
               <p className="text-sm text-on-surface italic flex-grow leading-relaxed">
                 &quot;My AC broke down in the middle of summer. Found David through FixItNow, he arrived within two hours and fixed it perfectly. Highly recommended!&quot;
@@ -425,7 +387,7 @@ export default function Home() {
                 <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-lg">J</div>
                 <div>
                   <p className="text-sm font-bold text-on-surface">Joanna T.</p>
-                  <p className="text-xs text-slate-455 font-medium">Homeowner</p>
+                  <p className="text-xs text-slate-400 font-medium">Homeowner</p>
                 </div>
               </div>
             </div>
@@ -433,11 +395,11 @@ export default function Home() {
             {/* Testimonial 2 */}
             <div className="glass-card p-8 rounded-xl flex flex-col gap-6 text-left border border-white/40">
               <div className="flex items-center gap-0.5 text-secondary-container">
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
               </div>
               <p className="text-sm text-on-surface italic flex-grow leading-relaxed">
                 &quot;As a property manager, finding reliable plumbers is tough. Sarah has been a lifesaver. The platform makes booking and tracking so easy.&quot;
@@ -445,8 +407,8 @@ export default function Home() {
               <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-800">
                 <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-lg">A</div>
                 <div>
-                  <p className="text-sm font-bold text-on-surface">Amanda w.</p>
-                  <p className="text-xs text-slate-455 font-medium">Property Manager</p>
+                  <p className="text-sm font-bold text-on-surface">Amanda W.</p>
+                  <p className="text-xs text-slate-400 font-medium">Property Manager</p>
                 </div>
               </div>
             </div>
@@ -454,11 +416,11 @@ export default function Home() {
             {/* Testimonial 3 */}
             <div className="glass-card p-8 rounded-xl flex flex-col gap-6 text-left border border-white/40">
               <div className="flex items-center gap-0.5 text-secondary-container">
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <Star className="h-5 w-5 fill-secondary-container" />
-                <StarHalf className="h-5 w-5 fill-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
+                <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
               </div>
               <p className="text-sm text-on-surface italic flex-grow leading-relaxed">
                 &quot;Great experience end-to-end. The pricing was transparent, and the technician was very professional and cleaned up after the job.&quot;
@@ -467,7 +429,7 @@ export default function Home() {
                 <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-lg">M</div>
                 <div>
                   <p className="text-sm font-bold text-on-surface">Michael R.</p>
-                  <p className="text-xs text-slate-455 font-medium">Verified Customer</p>
+                  <p className="text-xs text-slate-400 font-medium">Verified Customer</p>
                 </div>
               </div>
             </div>
@@ -512,7 +474,7 @@ export default function Home() {
 
       {/* Footer Section */}
       <footer className="w-full bg-inverse-surface dark:bg-surface-container-lowest mt-auto border-t border-slate-200/10">
-        <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-4 sm:px-6 lg:px-8 py-12 text-slate-350 text-left">
+        <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-4 sm:px-6 lg:px-8 py-12 text-slate-300 text-left">
           <div className="flex flex-col gap-2">
             <span className="text-2xl font-bold text-white">FixItNow</span>
             <p className="text-sm text-slate-400 mt-2">© 2024 FixItNow. All rights reserved.</p>

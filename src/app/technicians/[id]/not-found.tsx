@@ -1,0 +1,27 @@
+import React from 'react';
+import Link from 'next/link';
+import { ShieldAlert, ChevronLeft } from 'lucide-react';
+
+export default function TechnicianNotFound() {
+  return (
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-subtle flex items-center justify-center">
+      <div className="max-w-md w-full glass-card p-8 rounded-2xl border border-white/40 shadow-xl text-center flex flex-col items-center gap-5">
+        <div className="w-16 h-16 rounded-full bg-red-150 dark:bg-red-950 flex items-center justify-center text-red-500">
+          <ShieldAlert className="h-9 w-9" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Technician Not Found</h1>
+          <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+            The technician profile you requested does not exist, may be undergoing credentials verification, or has been deactivated.
+          </p>
+        </div>
+        <Link
+          href="/technicians"
+          className="w-full py-3 bg-primary text-white font-bold rounded-lg text-xs hover:bg-primary/95 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" /> Back to Technicians Directory
+        </Link>
+      </div>
+    </div>
+  );
+}

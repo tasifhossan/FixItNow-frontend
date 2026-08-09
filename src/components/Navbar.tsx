@@ -28,19 +28,19 @@ export const Navbar: React.FC = () => {
           {/* Navigation links placeholder */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="#"
+              href="/services"
               className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
             >
               Services
             </Link>
             <Link
-              href="#"
+              href="/technicians"
               className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
             >
               Technicians
             </Link>
             <Link
-              href="#"
+              href="/#how-it-works"
               className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
             >
               How it Works
