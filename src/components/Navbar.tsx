@@ -8,16 +8,20 @@ export const Navbar: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200/50 bg-white/70 backdrop-blur-md dark:border-slate-800/50 dark:bg-slate-900/70 transition-colors duration-300">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 w-full bg-surface/70 dark:bg-surface-container-lowest/70 backdrop-blur-xl border-b border-white/40 dark:border-outline-variant/20 shadow-[0_8px_32px_rgba(0,109,119,0.08)]">
+      <div className="mx-auto max-w-container-max px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo on the left */}
-          <div className="flex items-center gap-2">
-            <Link href="/" className="group flex items-center gap-1.5 text-xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-violet-500 transition-all duration-300">
-                FixIt
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <img
+                alt="FixItNow Logo"
+                className="h-9 w-9 object-contain rounded"
+                src="https://lh3.googleusercontent.com/aida/AP1WRLvszPwKkv9Hjgm7LtupHjCzqClQPNQYz2qh0sr-rRaspsSpI3RXZAY61C40jp02f7OkukshwzcVWHmzzk3EyiCUSU8MCEwjmMS_6VxBlupko27OfTtg5iHpVluvHMzPKlAjsdV0WiEfl58X21BHaP8Fz7ZcpC6cwBUMNpFb6tOvP6KgvSTQtWM0swsUuR_k7HGjuu2UcOyNC_xRjLvzuje2LIqQf8HX-Qf7MrZnlANsYTUAYdFzp6xGxOMd"
+              />
+              <span className="text-xl font-bold text-primary dark:text-primary-fixed-dim tracking-tight">
+                FixItNow
               </span>
-              <span className="text-slate-800 dark:text-slate-200">Now</span>
             </Link>
           </div>
 
@@ -25,15 +29,21 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="#"
-              className="text-sm font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors duration-200"
+              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
             >
               Services
             </Link>
             <Link
               href="#"
-              className="text-sm font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors duration-200"
+              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
             >
               Technicians
+            </Link>
+            <Link
+              href="#"
+              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
+            >
+              How it Works
             </Link>
             {user && (
               <Link
@@ -66,7 +76,7 @@ export const Navbar: React.FC = () => {
                     <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight">
                       {user.name}
                     </span>
-                    <span className="text-xxs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mt-0.5">
+                    <span className="text-xxs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-505 leading-none mt-0.5">
                       {user.role}
                     </span>
                   </div>
@@ -90,16 +100,16 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               // Guest view (login / register)
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-850 transition-all duration-250"
+                  className="px-4 py-2 text-primary dark:text-primary-fixed-dim hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200 font-semibold text-sm active:scale-95"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-500/10 hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all duration-200"
+                  className="px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:brightness-110 transition-all duration-200 font-semibold text-sm active:scale-95 shadow-sm"
                 >
                   Register
                 </Link>
