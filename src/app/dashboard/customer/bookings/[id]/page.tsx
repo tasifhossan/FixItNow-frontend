@@ -8,6 +8,7 @@ import { ChevronLeft, Calendar, MapPin, Wrench, FileText, Star, CreditCard, Mess
 import { getBookingById, cancelBooking, Booking } from '@/lib/bookings';
 import BookingStatusBadge from '@/components/BookingStatusBadge';
 import ReviewForm from '@/components/ReviewForm';
+import { Review } from '@/lib/reviews';
 
 interface BookingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -61,8 +62,7 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleReviewSuccess = (newReview: any) => {
+  const handleReviewSuccess = (newReview: Review) => {
     setBooking(prev => prev ? { ...prev, review: newReview } : null);
     setShowReviewForm(false);
   };

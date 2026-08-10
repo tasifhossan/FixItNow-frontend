@@ -1,5 +1,6 @@
-﻿import api from './api';
+import api from './api';
 import { PaginationMeta } from './services';
+import { Review } from './reviews';
 
 // ─── Status enum ──────────────────────────────────────────────────────────────
 // Values come directly from the Prisma schema BookingStatus enum
@@ -58,18 +59,6 @@ export interface BookingPayment {
   updatedAt: string;
 }
 
-// Review shape — included in getBookingById / cancel / respond / updateStatus
-export interface BookingReview {
-  id: string;
-  bookingId: string;
-  customerId: string;
-  technicianId: string;
-  rating: number;
-  comment: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // ─── Core Booking interfaces ──────────────────────────────────────────────────
 interface BookingBase {
   id: string;
@@ -109,7 +98,7 @@ export interface Booking extends BookingBase {
   technician: BookingTechnician;
   customer: BookingUser;
   payment: BookingPayment | null;
-  review: BookingReview | null;
+  review: Review | null;
 }
 
 // ─── Request payload ──────────────────────────────────────────────────────────
