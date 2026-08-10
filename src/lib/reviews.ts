@@ -26,3 +26,13 @@ export const getTechnicianReviews = async (
   const response = await api.get(`/reviews/technician/${technicianId}`, { params });
   return response.data.data;
 };
+
+export const createReview = async (payload: {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}): Promise<Review> => {
+  const response = await api.post('/reviews', payload);
+  return response.data.data;
+};
+
