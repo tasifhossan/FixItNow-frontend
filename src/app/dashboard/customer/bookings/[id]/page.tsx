@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useRouter, notFound } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { ChevronLeft, Calendar, MapPin, Wrench, FileText, Star, CreditCard, MessageSquare, Shield } from 'lucide-react';
-import { getBookingById, Booking } from '@/lib/bookings';
+import { getBookingById, cancelBooking, Booking } from '@/lib/bookings';
 import BookingStatusBadge from '@/components/BookingStatusBadge';
+import ReviewForm from '@/components/ReviewForm';
 
 interface BookingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -35,6 +36,36 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancel = async () => {
+    if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      const updatedBooking = await cancelBooking(id);
+      setBooking(updatedBooking);
+      toast.success('Booking cancelled');
+    } catch (error: unknown) {
+      console.error('Failed to cancel booking:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to cancel booking. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleReviewSuccess = (newReview: any) => {
+    setBooking(prev => prev ? { ...prev, review: newReview } : null);
+    setShowReviewForm(false);
+  };
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -303,8 +334,8 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
             </div>
           )}
 
-          {/* Action Buttons Panel (Inert placeholders in Task 3) */}
-          {(showCancelButton || showPayButton || showReviewButton) && (
+          {/* Action Buttons Panel */}
+          {(showCancelButton || showPayButton || showReviewButton || showReviewForm) && (
             <div className="glass-card p-6 rounded-2xl border border-white/40 bg-white/20 dark:bg-slate-900/20 space-y-3">
               <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <Shield className="h-4 w-4 text-indigo-500" /> Actions
@@ -320,30 +351,32 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
                     <CreditCard className="h-4 w-4" />
                     Pay Now
                   </button>
-                  /* Note: Pay Now action button is a styled placeholder, to be wired in the payment integration phase. */
                 )}
 
-                {/* Leave Review Button (Inert placeholder; to be wired in Task 4) */}
+                {/* Leave Review Button & Inline Form */}
                 {showReviewButton && (
-                  <button
-                    disabled
-                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl text-xs cursor-not-allowed opacity-50 shadow-none transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Star className="h-4 w-4" />
-                    Leave a Review
-                  </button>
-                  /* Note: Leave Review action button is a styled placeholder, to be wired in Task 4. */
+                  showReviewForm ? (
+                    <ReviewForm bookingId={booking.id} onSuccess={handleReviewSuccess} />
+                  ) : (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl text-xs shadow-md hover:from-indigo-500 hover:to-violet-500 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Star className="h-4 w-4" />
+                      Leave a Review
+                    </button>
+                  )
                 )}
 
-                {/* Cancel Booking Button (Inert placeholder; to be wired in Task 4) */}
-                {showCancelButton && (
+                {/* Cancel Booking Button */}
+                {showCancelButton && !showReviewForm && (
                   <button
-                    disabled
-                    className="w-full py-3 border border-red-200 dark:border-red-900/50 text-red-650 hover:text-red-500 font-bold rounded-xl text-xs cursor-not-allowed opacity-50 shadow-none transition-all flex items-center justify-center gap-1.5"
+                    onClick={handleCancel}
+                    disabled={isCancelling}
+                    className="w-full py-3 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 hover:text-red-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Cancel Booking
+                    {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
                   </button>
-                  /* Note: Cancel Booking action button is a styled placeholder, to be wired in Task 4. */
                 )}
               </div>
             </div>
