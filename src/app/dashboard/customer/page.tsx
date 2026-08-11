@@ -2,22 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, MapPin, ArrowRight, ClipboardCheck, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { 
+  Wrench, 
+  Check, 
+  Star, 
+  FileText, 
+  Search, 
+  Plus, 
+  CreditCard,
+  User
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getMyBookings, BookingListItem } from '@/lib/bookings';
 import BookingStatusBadge from '@/components/BookingStatusBadge';
 
-// Helper to format booking date
-function formatBookingDate(dateStr: string) {
+// Helper to format date exactly like Figma (e.g., Oct 24, 2023)
+function formatFigmaDate(dateStr: string) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      weekday: 'short',
-      year: 'numeric',
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: 'numeric',
     });
   } catch {
     return dateStr;
@@ -28,17 +35,18 @@ function formatBookingDate(dateStr: string) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-6 animate-pulse text-left">
-      <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+      <div className="flex justify-between items-center">
+        <div className="space-y-2">
+          <div className="h-8 w-64 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+          <div className="h-4 w-96 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
       </div>
-      <div className="space-y-4">
-        <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-      </div>
+      <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
     </div>
   );
 }
@@ -46,20 +54,20 @@ function DashboardSkeleton() {
 export default function CustomerDashboardPage() {
   const { user } = useAuth();
   const [recentBookings, setRecentBookings] = useState<BookingListItem[]>([]);
-  const [stats, setStats] = useState({ active: 0, completed: 0, total: 0 });
+  const [stats, setStats] = useState({ active: 0, completed: 0, total: 0, totalSpent: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch up to 100 bookings to compute accurate stats and show the top 5
+        // Fetch bookings to compute stats and display recent entries
         const response = await getMyBookings({ page: 1, limit: 100 });
         const allBookings = response.data;
         const total = response.meta.total;
 
-        // Calculate counts client-side
         let activeCount = 0;
         let completedCount = 0;
+        let spentSum = 0;
 
         allBookings.forEach((b) => {
           if (['REQUESTED', 'ACCEPTED', 'PAID', 'IN_PROGRESS'].includes(b.status)) {
@@ -67,15 +75,21 @@ export default function CustomerDashboardPage() {
           } else if (b.status === 'COMPLETED') {
             completedCount++;
           }
+
+          // Sum paid amount for paid/completed bookings
+          if (['PAID', 'COMPLETED'].includes(b.status)) {
+            spentSum += b.totalAmount;
+          }
         });
 
         setStats({
           active: activeCount,
           completed: completedCount,
           total,
+          totalSpent: spentSum,
         });
 
-        // Show the top 5 most recent
+        // Show the top 5 most recent bookings
         setRecentBookings(allBookings.slice(0, 5));
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
@@ -91,142 +105,221 @@ export default function CustomerDashboardPage() {
     return <DashboardSkeleton />;
   }
 
+  const isEmptyState = stats.total === 0;
+
   return (
-    <div className="space-y-6 text-left">
-      {/* Welcome banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-6 md:p-8 text-white shadow-lg shadow-indigo-500/10">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Welcome back, {user?.name}!
-        </h1>
-        <p className="text-indigo-100 text-sm mt-1.5 max-w-xl">
-          Manage your bookings, browse services, and track repairs from your customer dashboard panel.
-        </p>
-      </div>
-
-      {/* Overview stats layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Stat 1: Total Bookings */}
-        <div className="rounded-xl border border-slate-250/20 bg-white dark:border-slate-850 dark:bg-slate-900 p-5 shadow-sm flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Bookings</h3>
-            <p className="text-3xl font-black text-slate-800 dark:text-white">{stats.total}</p>
-          </div>
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
-            <Calendar className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Stat 2: Active Bookings */}
-        <div className="rounded-xl border border-slate-250/20 bg-white dark:border-slate-850 dark:bg-slate-900 p-5 shadow-sm flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Status</h3>
-            <p className="text-3xl font-black text-indigo-650 dark:text-indigo-400">{stats.active}</p>
-          </div>
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
-            <Sparkles className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Stat 3: Completed Bookings */}
-        <div className="rounded-xl border border-slate-250/20 bg-white dark:border-slate-850 dark:bg-slate-900 p-5 shadow-sm flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed</h3>
-            <p className="text-3xl font-black text-green-600 dark:text-green-400">{stats.completed}</p>
-          </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-xl">
-            <ClipboardCheck className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Bookings Area */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Recent Bookings</h2>
-          {stats.total > 0 && (
-            <Link
-              href="/dashboard/customer/bookings"
-              className="text-xs font-bold text-indigo-650 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-305 flex items-center gap-1 transition-colors"
-            >
-              View All Bookings <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+    <div className="space-y-8 text-left">
+      
+      {/* ─── Header / Greeting Section ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          {isEmptyState ? (
+            <>
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Overview</h1>
+              <p className="text-sm text-slate-500">
+                Welcome back, {user?.name.split(' ')[0]}. Here is what&apos;s happening today.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Welcome back, {user?.name.split(' ')[0]}!
+              </h1>
+              <p className="text-sm text-slate-500">
+                Here is what&apos;s happening with your home services today.
+              </p>
+            </>
           )}
         </div>
+        {!isEmptyState && (
+          <Link
+            href="/services"
+            className="inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl text-sm transition-all shadow-md active:scale-95 shrink-0"
+          >
+            <Plus className="h-4.5 w-4.5" /> Book a New Service
+          </Link>
+        )}
+      </div>
 
-        {stats.total === 0 ? (
-          <div className="glass-card p-12 rounded-2xl text-center border border-white/40 flex flex-col items-center justify-center gap-4 bg-white/20 dark:bg-slate-900/20">
-            <Calendar className="h-12 w-12 text-indigo-500/50" />
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">No Bookings Yet</h3>
-              <p className="text-sm text-slate-405 max-w-sm mx-auto mt-1 leading-relaxed">
-                You haven&apos;t requested any maintenance or repairs yet. Browse our professional services to get started!
+      {/* ─── Stats Cards Grid ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        
+        {/* Stat Card 1: Active Bookings */}
+        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center gap-5 shadow-sm">
+          <div className={`p-4.5 rounded-full flex items-center justify-center shrink-0 ${
+            isEmptyState 
+              ? 'bg-slate-100 text-slate-400 dark:bg-slate-800' 
+              : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400'
+          }`}>
+            {isEmptyState ? <FileText className="h-6 w-6" /> : <Wrench className="h-6 w-6" />}
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Bookings</h3>
+            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+              {stats.active}
+            </p>
+          </div>
+        </div>
+
+        {/* Stat Card 2: Completed Jobs */}
+        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center gap-5 shadow-sm">
+          <div className={`p-4.5 rounded-full flex items-center justify-center shrink-0 ${
+            isEmptyState 
+              ? 'bg-slate-100 text-slate-400 dark:bg-slate-800' 
+              : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+          }`}>
+            {isEmptyState ? <FileText className="h-6 w-6" /> : <Check className="h-6 w-6" />}
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed Jobs</h3>
+            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+              {stats.completed}
+            </p>
+          </div>
+        </div>
+
+        {/* Stat Card 3: Saved Pros (Empty State) or Total Spent (Populated State) */}
+        {isEmptyState ? (
+          <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center gap-5 shadow-sm">
+            <div className="p-4.5 bg-slate-100 text-slate-400 dark:bg-slate-800 rounded-full flex items-center justify-center shrink-0">
+              <Star className="h-6 w-6" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saved Pros</h3>
+              <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+                0
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center gap-5 shadow-sm">
+            <div className="p-4.5 bg-slate-100 text-slate-600 dark:bg-slate-800 rounded-full flex items-center justify-center shrink-0">
+              <CreditCard className="h-6 w-6" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Spent</h3>
+              <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+                ৳{stats.totalSpent.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* ─── Main Content Container ─── */}
+      <div>
+        {isEmptyState ? (
+          /* ── Empty State Card ── */
+          <div className="bg-white border border-slate-200/70 dark:border-slate-800 dark:bg-slate-900 rounded-3xl p-10 flex flex-col items-center justify-center text-center gap-6 shadow-sm min-h-[420px]">
+            <div className="relative w-64 h-48 select-none">
+              <Image 
+                alt="You haven't booked anything yet" 
+                src="/empty_state_illustration.png"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="space-y-2 max-w-lg">
+              <h2 className="text-xl font-bold text-slate-850 dark:text-white">
+                You haven&apos;t booked anything yet.
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Ready to get things fixed? Browse our network of trusted professionals for your next home project, repair, or routine maintenance.
               </p>
             </div>
             <Link
               href="/services"
-              className="mt-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-lg text-sm shadow-md hover:from-indigo-500 hover:to-violet-500 active:scale-95 transition-all flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl text-sm transition-all shadow-md active:scale-95"
             >
-              Browse Services <ArrowRight className="h-4 w-4" />
+              <Search className="h-4 w-4" /> Browse Services
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {recentBookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="glass-card p-6 rounded-2xl border border-white/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 bg-white/20 dark:bg-slate-900/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left"
+          /* ── Recent Bookings Table Card ── */
+          <div className="bg-white border border-slate-200/70 dark:border-slate-850 dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm">
+            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white">Recent Bookings</h2>
+              <Link 
+                href="/dashboard/customer/bookings"
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
               >
-                {/* Main booking meta */}
-                <div className="space-y-2.5 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h3 className="text-base font-bold text-slate-800 dark:text-white truncate">
-                      {booking.service?.name}
-                    </h3>
-                    <BookingStatusBadge status={booking.status} />
-                  </div>
-                  
-                  {/* Tech info & Date */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-y-1.5 gap-x-4 text-xs text-slate-500 dark:text-slate-405 font-medium">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400">Technician:</span>
-                      <span className="text-slate-700 dark:text-slate-300 font-bold">
-                        {booking.technician?.user?.name}
-                      </span>
-                    </div>
-                    <div className="hidden sm:block text-slate-300">|</div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span>{formatBookingDate(booking.scheduledDate)}</span>
-                    </div>
-                  </div>
+                View All
+              </Link>
+            </div>
 
-                  {/* Details snippet */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-y-1.5 gap-x-4 text-xs text-slate-400">
-                    <div className="flex items-center gap-1.5 truncate max-w-sm">
-                      <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate">{booking.address}</span>
-                    </div>
-                  </div>
-                </div>
+            {/* Responsive Table Wrapper */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">Provider</th>
+                    <th className="px-6 py-4">Service</th>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40 text-xs">
+                  {recentBookings.map((booking) => (
+                    <tr key={booking.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                      
+                      {/* Provider info column */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-700 font-bold text-[10px]">
+                            {booking.technician?.user?.name ? (
+                              booking.technician.user.name.charAt(0).toUpperCase()
+                            ) : (
+                              <User className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-800 dark:text-white">
+                              {booking.technician?.user?.name || 'Assigned Pro'}
+                            </p>
+                            <p className="text-[10px] text-slate-400 capitalize">
+                              {booking.technician?.skills[0] || 'Technician'}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                {/* Price & Action button */}
-                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center w-full md:w-auto border-t md:border-none border-slate-100 dark:border-slate-800/80 pt-4 md:pt-0 shrink-0 gap-3">
-                  <div className="text-left md:text-right">
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Amount</p>
-                    <p className="text-lg font-black text-secondary-container mt-0.5">৳{booking.totalAmount}</p>
-                  </div>
-                  <Link
-                    href={`/dashboard/customer/bookings/${booking.id}`}
-                    className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-650 hover:border-indigo-500 dark:hover:text-indigo-400 dark:hover:border-indigo-500 rounded-xl text-xs font-bold transition-all flex items-center gap-1 hover:shadow-sm"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            ))}
+                      {/* Service column */}
+                      <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">
+                        {booking.service?.name}
+                      </td>
+
+                      {/* Date column */}
+                      <td className="px-6 py-4 text-slate-500 font-medium">
+                        {formatFigmaDate(booking.scheduledDate)}
+                      </td>
+
+                      {/* Status badge column */}
+                      <td className="px-6 py-4">
+                        <BookingStatusBadge status={booking.status} />
+                      </td>
+
+                      {/* Action details column */}
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/dashboard/customer/bookings/${booking.id}`}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                        >
+                          View Details
+                        </Link>
+                      </td>
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
+
     </div>
   );
 }

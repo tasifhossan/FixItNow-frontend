@@ -3,48 +3,64 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { getMyBookings, BookingListItem } from '../../../../lib/bookings';
 import { PaginationMeta } from '../../../../lib/services';
 import BookingStatusBadge from '../../../../components/BookingStatusBadge';
 
-// Helper to format booking date
-function formatBookingDate(dateStr: string) {
+// Helper to format date exactly like Figma (e.g., Oct 24, 2023 at 10:00 AM)
+function formatFigmaDateTime(dateStr: string) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      weekday: 'short',
-      year: 'numeric',
+    const formattedDate = date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     });
+    return `${formattedDate} at ${formattedTime}`;
   } catch {
     return dateStr;
   }
 }
 
-// Card skeleton for loading state
+// Loading state skeletons matching Figma loading state design
 function BookingCardSkeleton() {
   return (
-    <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, idx) => (
-        <div 
-          key={idx} 
-          className="glass-card p-6 rounded-2xl border border-white/40 animate-pulse flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/20 dark:bg-slate-900/20"
-        >
-          <div className="flex-1 space-y-3 w-full">
-            <div className="flex items-center gap-3">
-              <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
-              <div className="h-5 w-20 bg-slate-200 dark:bg-slate-800 rounded-full" />
+    <div className="space-y-6 text-left">
+      {/* Pill Skeletons */}
+      <div className="flex gap-2.5 pb-2 overflow-x-auto scrollbar-none">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
+        ))}
+      </div>
+
+      {/* Card Skeletons */}
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div 
+            key={idx} 
+            className="bg-white border border-slate-100 rounded-3xl p-6 animate-pulse flex items-center justify-between gap-6"
+          >
+            <div className="flex items-center gap-4 flex-1">
+              {/* Circle Avatar */}
+              <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+              {/* Text lines */}
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-40 bg-slate-200 rounded" />
+                <div className="h-3 w-48 bg-slate-100 rounded" />
+                <div className="h-3 w-32 bg-slate-100 rounded" />
+              </div>
             </div>
-            <div className="h-4 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
-            <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded" />
+            {/* Badge / Button */}
+            <div className="h-8 w-24 bg-slate-200 rounded-full" />
           </div>
-          <div className="h-10 w-28 bg-slate-200 dark:bg-slate-800 rounded-lg self-end md:self-center" />
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -81,7 +97,7 @@ function CustomerBookingsContent() {
         const response = await getMyBookings({
           status: currentStatus || undefined,
           page: currentPage,
-          limit: 5, // 5 bookings per page for better UI space
+          limit: 4, // 4 bookings per page matching mockup list size
         });
         setBookings(response.data);
         setMeta(response.meta);
@@ -117,155 +133,181 @@ function CustomerBookingsContent() {
     updateQueryParams({ page: String(newPage) });
   };
 
-  // Determine if there is any bookings whatsoever (unfiltered)
   const isTotallyEmpty = bookings.length === 0 && currentStatus === '' && currentPage === 1 && !isLoading;
 
   return (
     <div className="space-y-6 text-left">
-      {/* Title Header */}
+      
+      {/* ─── Title Header ─── */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">My Bookings</h1>
-        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Track the status of your requested, accepted, or active service appointments.
+        <h1 className="text-3xl font-extrabold text-slate-905 dark:text-white tracking-tight">My Bookings</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Track and manage your service requests.
         </p>
       </div>
 
-      {/* Filter Tabs / Chips */}
-      <div className="flex items-center w-full overflow-x-auto pb-2 scrollbar-none">
-        <div className="flex gap-2 min-w-max">
-          {STATUS_FILTERS.map((filter) => {
-            const isActive = currentStatus === filter.value;
-            return (
-              <button
-                key={filter.label}
-                onClick={() => handleFilterChange(filter.value)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-600 text-white shadow-md shadow-indigo-500/10'
-                    : 'bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Bookings List Display */}
       {isLoading ? (
         <BookingCardSkeleton />
-      ) : isTotallyEmpty ? (
-        <div className="glass-card p-12 rounded-2xl text-center border border-white/40 flex flex-col items-center justify-center gap-4 bg-white/20 dark:bg-slate-900/20">
-          <Calendar className="h-12 w-12 text-indigo-500/50" />
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">No Bookings Yet</h3>
-            <p className="text-sm text-slate-400 max-w-sm mx-auto mt-1 leading-relaxed">
-              You haven&apos;t booked any home services yet. Browse our directory and hire verified service professionals.
-            </p>
-          </div>
-          <Link
-            href="/services"
-            className="mt-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-lg text-sm shadow-md hover:from-indigo-500 hover:to-violet-500 active:scale-95 transition-all flex items-center gap-2"
-          >
-            Browse Services <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      ) : bookings.length === 0 ? (
-        <div className="glass-card p-12 rounded-2xl text-center border border-white/40 flex flex-col items-center justify-center gap-4 bg-white/20 dark:bg-slate-900/20">
-          <Calendar className="h-12 w-12 text-slate-300" />
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">No Bookings Found</h3>
-            <p className="text-sm text-slate-400 mt-1">
-              There are no bookings matching the selected status filter.
-            </p>
-          </div>
-          <button
-            onClick={() => handleFilterChange('')}
-            className="mt-2 px-5 py-2 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-          >
-            Clear Filter
-          </button>
-        </div>
       ) : (
-        <div className="space-y-4">
-          {bookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="glass-card p-6 rounded-2xl border border-white/40 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 bg-white/20 dark:bg-slate-900/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left"
-            >
-              {/* Main booking meta */}
-              <div className="space-y-2.5 flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h3 className="text-base font-bold text-slate-800 dark:text-white truncate">
-                    {booking.service?.name}
-                  </h3>
-                  <BookingStatusBadge status={booking.status} />
-                </div>
-                
-                {/* Tech info & Date */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-y-1.5 gap-x-4 text-xs text-slate-500 dark:text-slate-405 font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400">Technician:</span>
-                    <span className="text-slate-700 dark:text-slate-300 font-bold">
-                      {booking.technician?.user?.name}
-                    </span>
-                  </div>
-                  <div className="hidden sm:block text-slate-300">|</div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                    <span>{formatBookingDate(booking.scheduledDate)}</span>
-                  </div>
-                </div>
-
-                {/* Details snippet */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-y-1.5 gap-x-4 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5 truncate max-w-sm">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{booking.address}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Price & Action button */}
-              <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center w-full md:w-auto border-t md:border-none border-slate-100 dark:border-slate-800/80 pt-4 md:pt-0 shrink-0 gap-3">
-                <div className="text-left md:text-right">
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Amount</p>
-                  <p className="text-lg font-black text-secondary-container mt-0.5">৳{booking.totalAmount}</p>
-                </div>
-                <Link
-                  href={`/dashboard/customer/bookings/${booking.id}`}
-                  className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-650 hover:border-indigo-500 dark:hover:text-indigo-400 dark:hover:border-indigo-500 rounded-xl text-xs font-bold transition-all flex items-center gap-1 hover:shadow-sm"
-                >
-                  View Details
-                </Link>
-              </div>
+        <>
+          {/* ─── Filter Pills ─── */}
+          <div className="flex items-center w-full overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex gap-2.5 min-w-max">
+              {STATUS_FILTERS.map((filter) => {
+                const isActive = currentStatus === filter.value;
+                return (
+                  <button
+                    key={filter.label}
+                    onClick={() => handleFilterChange(filter.value)}
+                    className={`px-4 py-2.5 rounded-full text-xs font-bold border transition-all duration-200 ${
+                      isActive
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                        : 'bg-white border-slate-200/80 text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          </div>
 
-          {/* Pagination controls */}
-          {meta && meta.total > meta.limit && (
-            <div className="flex items-center justify-between border-t border-slate-250/20 dark:border-slate-800 pt-6 mt-6">
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center gap-1.5"
+          {/* ─── Main Content / List display ─── */}
+          {isTotallyEmpty || bookings.length === 0 ? (
+            /* ── Empty State Container ── */
+            <div className="bg-white border border-slate-200/70 rounded-3xl p-10 flex flex-col items-center justify-center text-center gap-6 shadow-sm min-h-[420px]">
+              <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
+                {/* Custom calendar-x SVG icon */}
+                <svg className="w-10 h-10 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <line x1="10" y1="14" x2="14" y2="18" />
+                  <line x1="14" y1="14" x2="10" y2="18" />
+                </svg>
+              </div>
+              <div className="space-y-2 max-w-md">
+                <h2 className="text-lg font-bold text-slate-800">No bookings found</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  You haven&apos;t booked anything yet. Get started by browsing our trusted professionals and booking your first service.
+                </p>
+              </div>
+              <Link
+                href="/services"
+                className="px-6 py-3 bg-[#78350F] hover:bg-[#632a0a] text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95"
               >
-                <ChevronLeft className="h-4 w-4" /> Previous
-              </button>
-              <span className="text-xs font-semibold text-slate-500">
-                Page {meta.page} of {Math.ceil(meta.total / meta.limit)}
-              </span>
-              <button
-                disabled={currentPage >= Math.ceil(meta.total / meta.limit)}
-                onClick={() => handlePageChange(currentPage + 1)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-100/50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center gap-1.5"
-              >
-                Next <ChevronRight className="h-4 w-4" />
-              </button>
+                Browse Services
+              </Link>
+            </div>
+          ) : (
+            /* ── Bookings Cards List ── */
+            <div className="space-y-4">
+              {bookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="bg-white border border-slate-200/80 rounded-3xl p-6 hover:shadow-md transition-shadow duration-300 flex flex-col gap-5 text-left"
+                >
+                  {/* Top Row: Tech info + price */}
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-3.5">
+                      {/* Technician Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-700 font-bold text-xs shadow-sm">
+                        {booking.technician?.user?.name ? (
+                          booking.technician.user.name.charAt(0).toUpperCase()
+                        ) : (
+                          <User className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="space-y-0.5">
+                        <h3 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
+                          {booking.technician?.user?.name || 'Assigned Pro'}
+                        </h3>
+                        <p className="text-xs text-slate-400 capitalize font-medium">
+                          {booking.technician?.skills[0] || 'Technician'} • {booking.service?.name}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Status Badge + Price */}
+                    <div className="flex items-center gap-3.5 shrink-0">
+                      <BookingStatusBadge status={booking.status} />
+                      <span className="text-lg font-black text-slate-800">
+                        ৳{booking.totalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Date, Address + View Details */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-50 pt-4 gap-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-2 text-xs text-slate-500 font-semibold">
+                      {/* Date */}
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span>{formatFigmaDateTime(booking.scheduledDate)}</span>
+                      </div>
+                      {/* Address */}
+                      <div className="flex items-center gap-2 truncate max-w-xs md:max-w-sm">
+                        <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span className="truncate">{booking.address}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Link */}
+                    <Link
+                      href={`/dashboard/customer/bookings/${booking.id}`}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5 shrink-0 self-end sm:self-auto"
+                    >
+                      View Details <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+
+                </div>
+              ))}
+
+              {/* ─── Pagination Controls ─── */}
+              {meta && meta.total > meta.limit && (
+                <div className="flex justify-center items-center gap-2 mt-8 pt-4">
+                  {/* Previous button */}
+                  <button
+                    disabled={currentPage <= 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="p-2 border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                  >
+                    <ChevronLeft className="h-4.5 w-4.5" />
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.ceil(meta.total / meta.limit) }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    const isPageActive = currentPage === pageNum;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`h-9 w-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
+                          isPageActive
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  {/* Next button */}
+                  <button
+                    disabled={currentPage >= Math.ceil(meta.total / meta.limit)}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="p-2 border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                  >
+                    <ChevronRight className="h-4.5 w-4.5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
@@ -273,7 +315,11 @@ function CustomerBookingsContent() {
 
 export default function CustomerBookingsPage() {
   return (
-    <Suspense fallback={<BookingCardSkeleton />}>
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-sm text-slate-400 animate-pulse">Loading Bookings…</p>
+      </div>
+    }>
       <CustomerBookingsContent />
     </Suspense>
   );

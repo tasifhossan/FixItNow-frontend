@@ -2,10 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
+  const pathname = usePathname();
+
+  // Hide the global landing navbar inside dashboard panels to match Figma layouts
+  if (pathname.startsWith('/dashboard')) {
+    return null;
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-blue-100 shadow-[0_2px_16px_rgba(37,99,235,0.07)]">

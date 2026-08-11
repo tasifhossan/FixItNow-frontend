@@ -12,9 +12,9 @@ export default function TechnicianDashboardLayout({
 }) {
   return (
     <RoleGuard allowedRoles={['TECHNICIAN']}>
-      <div className="flex-1 flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
+      <div className="flex-1 flex flex-col md:flex-row min-h-screen">
         {/* Sidebar Panel */}
-        <aside className="w-full md:w-64 border-r border-slate-200/50 bg-white dark:border-slate-800/50 dark:bg-slate-900 transition-colors duration-300 md:sticky md:top-16 md:h-[calc(100vh-4rem)] overflow-y-auto">
+        <aside className="w-full md:w-64 border-r border-slate-200/50 bg-white dark:border-slate-800/50 dark:bg-slate-900 transition-colors duration-300 md:sticky md:top-0 md:h-screen overflow-y-auto">
           <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-850">
             <h2 className="text-md font-bold text-slate-800 dark:text-white">Technician Panel</h2>
             <p className="text-3xs uppercase tracking-wider text-slate-400 mt-0.5">Workspace</p>
