@@ -8,114 +8,113 @@ export const Navbar: React.FC = () => {
   const { user, isLoading, logout } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-surface/70 dark:bg-surface-container-lowest/70 backdrop-blur-xl border-b border-white/40 dark:border-outline-variant/20 shadow-[0_8px_32px_rgba(0,109,119,0.08)]">
-      <div className="mx-auto max-w-container-max px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-blue-100 shadow-[0_2px_16px_rgba(37,99,235,0.07)]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo on the left */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <img
-                alt="FixItNow Logo"
-                className="h-9 w-9 object-contain rounded"
-                src="https://lh3.googleusercontent.com/aida/AP1WRLvszPwKkv9Hjgm7LtupHjCzqClQPNQYz2qh0sr-rRaspsSpI3RXZAY61C40jp02f7OkukshwzcVWHmzzk3EyiCUSU8MCEwjmMS_6VxBlupko27OfTtg5iHpVluvHMzPKlAjsdV0WiEfl58X21BHaP8Fz7ZcpC6cwBUMNpFb6tOvP6KgvSTQtWM0swsUuR_k7HGjuu2UcOyNC_xRjLvzuje2LIqQf8HX-Qf7MrZnlANsYTUAYdFzp6xGxOMd"
-              />
-              <span className="text-xl font-bold text-primary dark:text-primary-fixed-dim tracking-tight">
-                FixItNow
-              </span>
-            </Link>
-          </div>
 
-          {/* Navigation links placeholder */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* ── Logo ── */}
+          <Link href="/" className="flex items-center gap-2 group">
+            {/* Wrench icon mark */}
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-sm group-hover:bg-blue-700 transition-colors duration-200">
+              <svg className="h-4.5 w-4.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </div>
+            <span className="text-xl font-extrabold text-slate-800 tracking-tight">
+              FixIt<span className="text-blue-600">Now</span>
+            </span>
+          </Link>
+
+          {/* ── Nav links ── */}
+          <div className="hidden md:flex items-center gap-7">
             <Link
               href="/services"
-              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
             >
               Services
             </Link>
             <Link
               href="/technicians"
-              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
             >
               Technicians
             </Link>
             <Link
               href="/#how-it-works"
-              className="text-sm font-medium text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
             >
               How it Works
             </Link>
             {user && (
               <Link
                 href={`/dashboard/${user.role.toLowerCase()}`}
-                className="text-sm font-semibold text-indigo-650 hover:text-indigo-550 dark:text-indigo-400 dark:hover:text-indigo-350 transition-colors duration-200"
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200"
               >
                 Dashboard
               </Link>
             )}
           </div>
 
-          {/* User actions on the right */}
-          <div className="flex items-center gap-4">
+          {/* ── User actions ── */}
+          <div className="flex items-center gap-3">
             {isLoading ? (
-              // Loading skeleton for auth state
               <div className="flex items-center gap-3">
-                <div className="h-8 w-16 animate-pulse rounded-md bg-slate-200 dark:bg-slate-800"></div>
-                <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800"></div>
+                <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
+                <div className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
               </div>
             ) : user ? (
-              // Logged in user view
-              <div className="flex items-center gap-4">
+              /* ── Logged-in view ── */
+              <div className="flex items-center gap-3">
+                {/* Avatar + name */}
                 <div className="flex items-center gap-2.5">
-                  {/* User Avatar */}
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-sm font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm ring-2 ring-blue-100">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
-                  {/* Name and Role */}
                   <div className="hidden sm:flex flex-col text-left">
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight">
+                    <span className="text-sm font-semibold text-slate-800 leading-tight">
                       {user.name}
                     </span>
-                    <span className="text-xxs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-505 leading-none mt-0.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 leading-none mt-0.5">
                       {user.role}
                     </span>
                   </div>
                 </div>
 
-                {/* Dashboard & Logout Buttons */}
+                {/* Dashboard + Logout */}
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/dashboard/${user.role.toLowerCase()}`}
-                    className="hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-indigo-650 hover:text-indigo-550 dark:text-indigo-400 dark:hover:text-indigo-350 transition-all duration-200"
+                    className="hidden sm:inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-all duration-200"
                   >
                     Dashboard
                   </Link>
                   <button
                     onClick={logout}
-                    className="rounded-lg border border-slate-200 dark:border-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     Logout
                   </button>
                 </div>
               </div>
             ) : (
-              // Guest view (login / register)
+              /* ── Guest view ── */
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
-                  className="px-4 py-2 text-primary dark:text-primary-fixed-dim hover:text-secondary dark:hover:text-secondary-fixed transition-colors duration-200 font-semibold text-sm active:scale-95"
+                  className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200 active:scale-95"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:brightness-110 transition-all duration-200 font-semibold text-sm active:scale-95 shadow-sm"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white rounded-lg transition-all duration-200 font-bold text-sm active:scale-95 shadow-sm shadow-amber-200"
                 >
                   Register
                 </Link>
               </div>
             )}
           </div>
+
         </div>
       </div>
     </nav>
