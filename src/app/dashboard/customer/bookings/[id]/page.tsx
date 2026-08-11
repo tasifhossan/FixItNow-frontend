@@ -9,6 +9,7 @@ import { getBookingById, cancelBooking, Booking } from '@/lib/bookings';
 import BookingStatusBadge from '@/components/BookingStatusBadge';
 import ReviewForm from '@/components/ReviewForm';
 import { Review } from '@/lib/reviews';
+import { initiatePayment } from '@/lib/payments';
 
 interface BookingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -39,6 +40,24 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isPayingNow, setIsPayingNow] = useState(false);
+
+  const handlePayNow = async () => {
+    setIsPayingNow(true);
+    try {
+      const { gatewayPageUrl } = await initiatePayment(booking!.id);
+      // Full browser redirect — SSLCommerz requires a real navigation, not a client-side route change
+      window.location.href = gatewayPageUrl;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to initiate payment. Please try again.';
+      toast.error(errorMessage);
+      setIsPayingNow(false);
+    }
+  };
 
   const handleCancel = async () => {
     if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
@@ -342,15 +361,21 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
               </h3>
               
               <div className="flex flex-col gap-2.5">
-                {/* Pay Now Button (Inert placeholder; payment integration is a later phase) */}
+                {/* Pay Now Button */}
                 {showPayButton && (
-                  <button
-                    disabled
-                    className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold rounded-xl text-xs cursor-not-allowed opacity-50 shadow-none transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Pay Now
-                  </button>
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      onClick={handlePayNow}
+                      disabled={isPayingNow}
+                      className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold rounded-xl text-xs shadow-md hover:from-emerald-500 hover:to-green-500 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      {isPayingNow ? 'Redirecting to Payment...' : 'Pay Now'}
+                    </button>
+                    <p className="text-3xs text-slate-400 text-center">
+                      You&apos;ll be redirected to complete payment securely.
+                    </p>
+                  </div>
                 )}
 
                 {/* Leave Review Button & Inline Form */}
