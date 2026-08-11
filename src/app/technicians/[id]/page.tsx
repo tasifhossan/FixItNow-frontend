@@ -145,7 +145,7 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
                 </div>
 
                 <div className="flex items-center gap-0.5 text-secondary-container">
-                  <Star className="h-4.5 w-4.5 fill-secondary-container text-secondary-container" />
+                  <Star className="h-5 w-5 fill-secondary-container text-secondary-container" />
                   <span className="text-slate-800 dark:text-white font-bold text-sm ml-1">
                     {technician.averageRating.toFixed(1)}
                   </span>
@@ -187,7 +187,7 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
                         className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 hover:border-primary bg-white/30 hover:bg-white/60 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 transition-all flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-2">
-                          <Wrench className="h-4.5 w-4.5 text-primary shrink-0" />
+                          <Wrench className="h-5 w-5 text-primary shrink-0" />
                           <span className="text-xs font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary transition-colors">
                             {service.name}
                           </span>

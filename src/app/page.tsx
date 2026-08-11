@@ -232,7 +232,7 @@ export default function Home() {
             {/* Search Input Form */}
             <form action="/services" method="GET" className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row gap-2.5 w-full max-w-xl shadow-sm">
               <div className="flex-1 flex items-center border border-slate-200 rounded-xl px-3 bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-                <Search className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                <Search className="h-5 w-5 text-slate-400 shrink-0" />
                 <input 
                   name="searchTerm"
                   className="w-full bg-transparent border-none focus:ring-0 text-slate-800 text-sm py-2.5 px-2 placeholder-slate-400 outline-none" 
@@ -241,7 +241,7 @@ export default function Home() {
                 />
               </div>
               <div className="flex-1 flex items-center border border-slate-200 rounded-xl px-3 bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-                <MapPin className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                <MapPin className="h-5 w-5 text-slate-400 shrink-0" />
                 <input 
                   className="w-full bg-transparent border-none focus:ring-0 text-slate-800 text-sm py-2.5 px-2 placeholder-slate-400 outline-none" 
                   placeholder="Zip code or City" 

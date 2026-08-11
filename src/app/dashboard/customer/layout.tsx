@@ -34,7 +34,7 @@ export default function CustomerDashboardLayout({
                   : 'text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50'
               }`}
             >
-              <LayoutDashboard className="h-4.5 w-4.5" />
+              <LayoutDashboard className="h-5 w-5" />
               Overview
             </Link>
             <Link
@@ -45,7 +45,7 @@ export default function CustomerDashboardLayout({
                   : 'text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50'
               }`}
             >
-              <CalendarDays className="h-4.5 w-4.5" />
+              <CalendarDays className="h-5 w-5" />
               Bookings
             </Link>
           </nav>

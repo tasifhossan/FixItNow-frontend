@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -47,7 +47,7 @@ export default function TechnicianBookingCTA({
           disabled
           className="w-full py-4 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-lg text-sm font-bold cursor-not-allowed shadow-none border border-slate-300/10 transition-all flex items-center justify-center gap-1.5"
         >
-          <Calendar className="h-4.5 w-4.5" />
+          <Calendar className="h-5 w-5" />
           Book Appointment
         </button>
         <p className="text-center text-[11px] text-slate-400">

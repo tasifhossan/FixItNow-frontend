@@ -83,7 +83,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {/* Assigned Technicians block */}
           <div className="border-t border-slate-200/50 dark:border-slate-800 pt-6 flex flex-col gap-4">
             <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Users className="h-4.5 w-4.5 text-primary" /> Technicians Offering this Service
+              <Users className="h-5 w-5 text-primary" /> Technicians Offering this Service
             </h2>
             
             {/* Limitation Notice */}

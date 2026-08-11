@@ -72,7 +72,7 @@ export default function LoginPage() {
           </label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-              <Mail className="h-4.5 w-4.5" />
+              <Mail className="h-5 w-5" />
             </span>
             <input
               type="email"
@@ -97,7 +97,7 @@ export default function LoginPage() {
           </label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-              <Lock className="h-4.5 w-4.5" />
+              <Lock className="h-5 w-5" />
             </span>
             <input
               type="password"

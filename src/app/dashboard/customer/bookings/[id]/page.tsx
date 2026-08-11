@@ -339,7 +339,7 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    className={`h-4.5 w-4.5 ${
+                    className={`h-5 w-5 ${
                       i < booking.review!.rating ? 'fill-secondary-container text-secondary-container' : 'text-slate-200 dark:text-slate-800'
                     }`}
                   />

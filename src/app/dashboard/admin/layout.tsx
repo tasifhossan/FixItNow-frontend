@@ -24,42 +24,42 @@ export default function AdminDashboardLayout({
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-indigo-650 bg-indigo-50/50 dark:text-indigo-400 dark:bg-indigo-950/20 transition-all duration-200"
             >
-              <LayoutDashboard className="h-4.5 w-4.5" />
+              <LayoutDashboard className="h-5 w-5" />
               Overview
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
-              <Users className="h-4.5 w-4.5" />
+              <Users className="h-5 w-5" />
               Users
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
-              <UserCheck className="h-4.5 w-4.5" />
+              <UserCheck className="h-5 w-5" />
               Technicians
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
-              <FolderKanban className="h-4.5 w-4.5" />
+              <FolderKanban className="h-5 w-5" />
               Categories
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
-              <ShieldAlert className="h-4.5 w-4.5" />
+              <ShieldAlert className="h-5 w-5" />
               Services
             </Link>
             <Link
               href="#"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
-              <CalendarDays className="h-4.5 w-4.5" />
+              <CalendarDays className="h-5 w-5" />
               Bookings
             </Link>
           </nav>
