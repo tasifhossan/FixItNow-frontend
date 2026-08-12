@@ -39,7 +39,7 @@ export default function TechnicianDashboardLayout({
             {/* Logo area */}
             <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-850 flex flex-col gap-0.5">
               <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400 select-none">
-                FixItNow
+                ServiceHub
               </span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Technician Portal
@@ -102,14 +102,30 @@ export default function TechnicianDashboardLayout({
             </nav>
           </div>
 
-          {/* Bottom section: Accept New Jobs & Logout */}
+          {/* Bottom section: Dynamic Action Button & Logout */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-850 space-y-2.5">
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              <span>Accept New Jobs</span>
-            </button>
+            {isProfileActive ? (
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <span>Accept New Jobs</span>
+              </button>
+            ) : isServicesActive ? (
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <span>Book New Service</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <span>+ New Job</span>
+              </button>
+            )}
             <button
               onClick={() => logout()}
               className="flex w-full items-center gap-3 px-4 py-2 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-55 dark:text-slate-400 dark:hover:bg-slate-850/50 transition-all duration-200"
