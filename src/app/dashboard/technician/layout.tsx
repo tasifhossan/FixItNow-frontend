@@ -65,18 +65,6 @@ export default function TechnicianDashboardLayout({
               </div>
             )}
 
-            {isBookingsActive && (
-              <div className="px-4 pt-4 pb-1">
-                <button
-                  type="button"
-                  onClick={() => toast.success('New Listing dialog triggered (mock)')}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <span>+ New Listing</span>
-                </button>
-              </div>
-            )}
-
             {/* Navigation links */}
             <nav className="p-4 pr-0 space-y-1">
               {/* Overview */}
@@ -133,32 +121,14 @@ export default function TechnicianDashboardLayout({
             </nav>
           </div>
 
-          {/* Bottom section: Dynamic Action Button & Logout */}
+          {/* Bottom section: Consistent Action Button & Logout */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-850 space-y-2.5">
-            {!isBookingsActive && (
-              isProfileActive ? (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <span>Accept New Jobs</span>
-                </button>
-              ) : isServicesActive ? (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <span>Book New Service</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <span>+ New Job</span>
-                </button>
-              )
-            )}
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              <span>Accept New Jobs</span>
+            </button>
             {isBookingsActive && (
               <button
                 type="button"
