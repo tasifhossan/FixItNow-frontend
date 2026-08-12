@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, 
   UserCheck, 
-  Settings, 
+  Wrench, 
   CalendarDays, 
   LogOut 
 } from 'lucide-react';
@@ -38,23 +38,23 @@ export default function TechnicianDashboardLayout({
             
             {/* Logo area */}
             <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-850 flex flex-col gap-0.5">
-              <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 select-none">
+              <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400 select-none">
                 FixItNow
               </span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Home Services
+                Technician Portal
               </span>
             </div>
 
             {/* Navigation links */}
-            <nav className="p-4 space-y-1">
+            <nav className="p-4 pr-0 space-y-1">
               {/* Overview */}
               <Link
                 href="/dashboard/technician"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-l-xl text-sm font-semibold transition-all duration-200 ${
                   isOverviewActive
-                    ? 'text-blue-600 bg-blue-50/50 dark:text-blue-400 dark:bg-blue-950/20'
-                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
+                    ? 'text-blue-600 bg-blue-50/50 border-r-4 border-blue-600 dark:text-blue-450 dark:bg-blue-950/20'
+                    : 'text-slate-655 hover:text-blue-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
                 }`}
               >
                 <LayoutDashboard className="h-5 w-5 shrink-0" />
@@ -64,10 +64,10 @@ export default function TechnicianDashboardLayout({
               {/* Profile & Skills */}
               <Link
                 href="/dashboard/technician/profile"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-l-xl text-sm font-semibold transition-all duration-200 ${
                   isProfileActive
-                    ? 'text-blue-600 bg-blue-50/50 dark:text-blue-400 dark:bg-blue-950/20'
-                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
+                    ? 'text-blue-600 bg-blue-50/50 border-r-4 border-blue-600 dark:text-blue-450 dark:bg-blue-950/20'
+                    : 'text-slate-655 hover:text-blue-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
                 }`}
               >
                 <UserCheck className="h-5 w-5 shrink-0" />
@@ -77,23 +77,23 @@ export default function TechnicianDashboardLayout({
               {/* My Services */}
               <Link
                 href="/dashboard/technician/services"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-l-xl text-sm font-semibold transition-all duration-200 ${
                   isServicesActive
-                    ? 'text-blue-600 bg-blue-50/50 dark:text-blue-400 dark:bg-blue-950/20'
-                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
+                    ? 'text-blue-600 bg-blue-50/50 border-r-4 border-blue-600 dark:text-blue-450 dark:bg-blue-950/20'
+                    : 'text-slate-655 hover:text-blue-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
                 }`}
               >
-                <Settings className="h-5 w-5 shrink-0" />
+                <Wrench className="h-5 w-5 shrink-0" />
                 My Services
               </Link>
 
               {/* Bookings */}
               <Link
                 href="/dashboard/technician/bookings"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-l-xl text-sm font-semibold transition-all duration-200 ${
                   isBookingsActive
-                    ? 'text-blue-600 bg-blue-50/50 dark:text-blue-400 dark:bg-blue-950/20'
-                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
+                    ? 'text-blue-600 bg-blue-50/50 border-r-4 border-blue-600 dark:text-blue-450 dark:bg-blue-950/20'
+                    : 'text-slate-655 hover:text-blue-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-850/50'
                 }`}
               >
                 <CalendarDays className="h-5 w-5 shrink-0" />
@@ -102,11 +102,17 @@ export default function TechnicianDashboardLayout({
             </nav>
           </div>
 
-          {/* Bottom section: Logout */}
-          <div className="p-4 border-t border-slate-100 dark:border-slate-850">
+          {/* Bottom section: Accept New Jobs & Logout */}
+          <div className="p-4 border-t border-slate-100 dark:border-slate-850 space-y-2.5">
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              <span>Accept New Jobs</span>
+            </button>
             <button
               onClick={() => logout()}
-              className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-850/50 transition-all duration-200"
+              className="flex w-full items-center gap-3 px-4 py-2 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-55 dark:text-slate-400 dark:hover:bg-slate-850/50 transition-all duration-200"
             >
               <LogOut className="h-5 w-5 shrink-0" />
               Logout
@@ -128,7 +134,7 @@ export default function TechnicianDashboardLayout({
               </svg>
               <input 
                 type="text" 
-                placeholder="Search services, pros, or bookings..." 
+                placeholder="Search bookings, services..." 
                 className="w-full bg-transparent border-none text-xs focus:outline-none text-slate-700 dark:text-slate-200 font-semibold"
               />
             </div>
@@ -136,7 +142,11 @@ export default function TechnicianDashboardLayout({
             {/* Right Side Icons & Avatar */}
             <div className="flex items-center gap-4">
               {/* Notification icon */}
-              <button className="p-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+              <button className="relative p-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white dark:border-slate-900"></span>
+                </span>
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
