@@ -195,7 +195,7 @@ export default function TechnicianServicesPage() {
                   {filteredAvailableServices.map((service) => (
                     <div 
                       key={service.id}
-                      className="border border-slate-100 dark:border-slate-850 rounded-2xl p-4.5 flex items-center justify-between gap-4 shadow-sm hover:border-slate-200 dark:hover:border-slate-800 transition-colors"
+                      className="border border-slate-100 dark:border-slate-850 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-sm hover:border-slate-200 dark:hover:border-slate-800 transition-colors"
                     >
                       <div className="space-y-1 min-w-0">
                         <h4 className="font-extrabold text-slate-900 dark:text-white text-xs truncate">

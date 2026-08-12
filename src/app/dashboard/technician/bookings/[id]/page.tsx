@@ -132,7 +132,7 @@ export default function TechnicianBookingDetailsPage({ params }: BookingDetailPa
 
                 <button
                   onClick={handleCall}
-                  className="px-4.5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 active:scale-95"
+                  className="px-4 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 active:scale-95"
                 >
                   <Phone className="h-3.5 w-3.5" />
                   <span>Call</span>
@@ -237,7 +237,7 @@ export default function TechnicianBookingDetailsPage({ params }: BookingDetailPa
                 <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Payment
                 </h3>
-                <div className="flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-2xl p-4.5">
+                <div className="flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-2xl p-4">
                   <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200">
                     <span className="font-bold">Total:</span>
                     <span className="text-slate-900 dark:text-white font-extrabold text-base">

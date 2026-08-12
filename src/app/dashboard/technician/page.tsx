@@ -359,14 +359,14 @@ export default function TechnicianDashboardPage() {
                       {isAccepted ? (
                         <button
                           onClick={() => handleUpdateBookingStatus(job.id, 'IN_PROGRESS')}
-                          className="px-4.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm active:scale-95"
+                          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm active:scale-95"
                         >
                           Start Job
                         </button>
                       ) : (
                         <button
                           onClick={() => handleUpdateBookingStatus(job.id, 'COMPLETED')}
-                          className="px-4.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm active:scale-95"
+                          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm active:scale-95"
                         >
                           Mark Complete
                         </button>

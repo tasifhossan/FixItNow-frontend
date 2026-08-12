@@ -121,7 +121,7 @@ export default function TechnicianBookingsPage() {
             <button
               key={tab.value}
               onClick={() => setSelectedTab(tab.value as typeof selectedTab)}
-              className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                 isActive 
                   ? 'bg-blue-600 text-white shadow-sm' 
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-850 dark:hover:text-slate-200'
@@ -190,13 +190,13 @@ export default function TechnicianBookingsPage() {
                 </div>
 
                 {/* Details Section */}
-                <div className="border-t border-b border-slate-50 dark:border-slate-850 py-4.5 my-4.5 space-y-3.5 text-xs text-slate-500 font-semibold leading-relaxed">
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                <div className="border-t border-b border-slate-50 dark:border-slate-850 py-4 my-4 space-y-3 text-xs text-slate-500 font-semibold leading-relaxed">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
                     <span>{booking.scheduledDate}</span>
                   </div>
-                  <div className="flex items-start gap-2.5">
-                    <MapPin className="h-4.5 w-4.5 text-slate-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
                     <span>{booking.address}</span>
                   </div>
                 </div>
@@ -207,7 +207,7 @@ export default function TechnicianBookingsPage() {
                     <>
                       <button
                         onClick={() => handleAccept(booking.id)}
-                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-755 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
+                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
                       >
                         Accept
                       </button>
@@ -268,7 +268,7 @@ export default function TechnicianBookingsPage() {
           onClick={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
           className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
         >
-          <ChevronLeft className="h-4.5 w-4.5 shrink-0" />
+          <ChevronLeft className="h-4 w-4 shrink-0" />
         </button>
         
         <button 
@@ -313,7 +313,7 @@ export default function TechnicianBookingsPage() {
           onClick={() => { if (currentPage < 8) setCurrentPage(currentPage + 1); }}
           className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
         >
-          <ChevronRight className="h-4.5 w-4.5 shrink-0" />
+          <ChevronRight className="h-4 w-4 shrink-0" />
         </button>
       </div>
 
