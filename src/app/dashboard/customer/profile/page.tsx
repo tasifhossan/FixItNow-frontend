@@ -11,6 +11,23 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'New passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
 
 function formatMemberSince(dateStr?: string) {
   if (!dateStr) return 'Member since Oct 2023';
@@ -32,9 +49,19 @@ export default function CustomerProfilePage() {
   const [infoMessage, setInfoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Change Password Form State
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const {
+    register: registerPass,
+    handleSubmit: handlePassSubmit,
+    reset: resetPass,
+    formState: { errors: passErrors },
+  } = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
   
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
@@ -73,32 +100,15 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdatePassword = async (data: ChangePasswordFormValues) => {
     setPassMessage(null);
-
-    if (!oldPassword) {
-      setPassMessage({ type: 'error', text: 'Current password is required.' });
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPassMessage({ type: 'error', text: 'New password must be at least 8 characters long.' });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPassMessage({ type: 'error', text: 'New passwords do not match.' });
-      return;
-    }
-
     setIsUpdatingPass(true);
     try {
       await api.patch('/users/change-password', {
-        oldPassword,
-        newPassword,
+        oldPassword: data.oldPassword,
+        newPassword: data.newPassword,
       });
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      resetPass();
       setPassMessage({ type: 'success', text: 'Password updated successfully!' });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
@@ -243,7 +253,7 @@ export default function CustomerProfilePage() {
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-bold text-slate-900 dark:text-white">Change Password</h3>
           </div>
-          <form onSubmit={handleUpdatePassword} className="p-6 space-y-5 flex-1 flex flex-col justify-between">
+          <form onSubmit={handlePassSubmit(handleUpdatePassword)} className="p-6 space-y-5 flex-1 flex flex-col justify-between">
             <div className="space-y-4">
               {passMessage && (
                 <div className={`p-4 rounded-xl flex items-start gap-2 text-xs font-semibold ${
@@ -266,9 +276,12 @@ export default function CustomerProfilePage() {
                 <div className="relative">
                   <input 
                     type={showOldPass ? 'text' : 'password'}
-                    value={oldPassword} 
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="w-full pl-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    {...registerPass('oldPassword')}
+                    className={`w-full pl-4 pr-11 py-3 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                      passErrors.oldPassword
+                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+                        : 'border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+                    }`}
                     placeholder="Enter current password"
                   />
                   <button
@@ -279,6 +292,11 @@ export default function CustomerProfilePage() {
                     {showOldPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {passErrors.oldPassword && (
+                  <p className="text-[10px] text-red-500 flex items-center gap-1 font-semibold mt-1">
+                    <AlertCircle className="h-3 w-3 shrink-0" /> {passErrors.oldPassword.message}
+                  </p>
+                )}
               </div>
 
               {/* New Password */}
@@ -287,9 +305,12 @@ export default function CustomerProfilePage() {
                 <div className="relative">
                   <input 
                     type={showNewPass ? 'text' : 'password'}
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    {...registerPass('newPassword')}
+                    className={`w-full pl-4 pr-11 py-3 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                      passErrors.newPassword
+                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+                        : 'border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+                    }`}
                     placeholder="Enter new password"
                   />
                   <button
@@ -300,9 +321,11 @@ export default function CustomerProfilePage() {
                     {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-red-500 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="h-3 w-3 shrink-0" /> Password must be at least 8 characters
-                </p>
+                {passErrors.newPassword && (
+                  <p className="text-[10px] text-red-500 flex items-center gap-1 font-semibold mt-1">
+                    <AlertCircle className="h-3 w-3 shrink-0" /> {passErrors.newPassword.message}
+                  </p>
+                )}
               </div>
 
               {/* Confirm New Password */}
@@ -311,9 +334,12 @@ export default function CustomerProfilePage() {
                 <div className="relative">
                   <input 
                     type={showConfirmPass ? 'text' : 'password'}
-                    value={confirmPassword} 
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-4 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    {...registerPass('confirmPassword')}
+                    className={`w-full pl-4 pr-11 py-3 bg-slate-50 border rounded-xl text-xs font-semibold focus:outline-none transition-all ${
+                      passErrors.confirmPassword
+                        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+                        : 'border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500'
+                    }`}
                     placeholder="Confirm new password"
                   />
                   <button
@@ -324,6 +350,11 @@ export default function CustomerProfilePage() {
                     {showConfirmPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {passErrors.confirmPassword && (
+                  <p className="text-[10px] text-red-500 flex items-center gap-1 font-semibold mt-1">
+                    <AlertCircle className="h-3 w-3 shrink-0" /> {passErrors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
 
