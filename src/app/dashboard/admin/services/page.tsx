@@ -176,7 +176,7 @@ export default function AdminCategoriesServicesPage() {
       }
 
       const servicesRes = await api.get('/services');
-      const apiServices = servicesRes.data.data || [];
+      const apiServices = servicesRes.data.data?.data || servicesRes.data.data || [];
       const formattedServices: ServiceOffer[] = apiServices.map((s: any) => ({
         id: s.id,
         categoryId: s.categoryId,
