@@ -45,3 +45,13 @@ export const assignServices = async (
 export const removeService = async (serviceId: string): Promise<void> => {
   await api.delete(`/technicians/me/services/${serviceId}`);
 };
+
+/**
+ * GET /technicians/me/profile
+ * Retrieves the authenticated technician's own profile details.
+ */
+export const getMyTechnicianProfile = async (): Promise<TechnicianProfile> => {
+  const response = await api.get('/technicians/me/profile');
+  return response.data.data;
+};
+

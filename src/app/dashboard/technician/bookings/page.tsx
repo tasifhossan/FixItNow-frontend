@@ -1,106 +1,130 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  Calendar, 
-  MapPin, 
-  ChevronLeft, 
-  ChevronRight
-} from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Calendar, MapPin, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { getAssignedBookings, BookingAssignedItem } from '@/lib/bookings';
+import { PaginationMeta } from '@/lib/services';
+import BookingActionButtons from '@/components/BookingActionButtons';
 
-interface MockBooking {
-  id: string;
-  customer: { name: string; avatarText: string; avatarBg: string };
-  service: { name: string };
-  scheduledDate: string;
-  address: string;
-  status: 'REQUESTED' | 'ACCEPTED' | 'PAID' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'DECLINED';
+// Helper to format date exactly like Figma (e.g., Oct 24, 2023 • 10:00 AM)
+function formatFigmaDateTime(dateStr: string) {
+  try {
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return `${formattedDate} • ${formattedTime}`;
+  } catch {
+    return dateStr;
+  }
 }
 
-export default function TechnicianBookingsPage() {
-  
-  // Local state for bookings matching Figma mockup
-  const [bookings, setBookings] = useState<MockBooking[]>([
-    {
-      id: 'book-1',
-      customer: { name: 'Sarah Jenkins', avatarText: 'SJ', avatarBg: 'bg-blue-50 text-blue-700' },
-      service: { name: 'Pipe Leak Repair' },
-      scheduledDate: 'Oct 24, 2023 • 10:00 AM',
-      address: '123 Maple Street, Apt 4B Seattle, WA 98101',
-      status: 'REQUESTED',
-    },
-    {
-      id: 'book-2',
-      customer: { name: 'Michael Ross', avatarText: 'MR', avatarBg: 'bg-blue-100 text-blue-700' },
-      service: { name: 'HVAC Maintenance' },
-      scheduledDate: 'Oct 25, 2023 • 2:00 PM',
-      address: '456 Oak Avenue Bellevue, WA 98004',
-      status: 'PAID',
-    },
-    {
-      id: 'book-3',
-      customer: { name: 'Emma Larson', avatarText: 'EL', avatarBg: 'bg-amber-100 text-amber-800' },
-      service: { name: 'Electrical Wiring' },
-      scheduledDate: 'Oct 23, 2023 • 8:00 AM',
-      address: '789 Pine Road, Suite 200 Redmond, WA 98052',
-      status: 'IN_PROGRESS',
-    },
-  ]);
+// Loading state skeletons matching Figma loading state design
+function BookingsSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse text-left max-w-5xl mx-auto">
+      {/* Title skeleton */}
+      <div className="space-y-2">
+        <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        <div className="h-4 w-80 bg-slate-100 dark:bg-slate-850 rounded-lg" />
+      </div>
 
-  const [selectedTab, setSelectedTab] = useState<'All' | 'Requested' | 'Accepted' | 'Paid' | 'In Progress' | 'Completed' | 'Cancelled' | 'Declined'>('All');
-  const [currentPage, setCurrentPage] = useState(1);
+      {/* Filter pills skeleton */}
+      <div className="flex gap-2.5 pb-1 overflow-x-auto scrollbar-none">
+        {Array.from({ length: 5 }).map((_, idx) => (
+          <div key={idx} className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded-full shrink-0" />
+        ))}
+      </div>
 
-  // Tab mapping
-  const tabs = [
-    { label: 'All', value: 'All' },
-    { label: 'Requested', value: 'Requested' },
-    { label: 'Accepted', value: 'Accepted' },
-    { label: 'Paid', value: 'Paid' },
-    { label: 'In Progress', value: 'In Progress' },
-    { label: 'Completed', value: 'Completed' },
-    { label: 'Cancelled', value: 'Cancelled' },
-    { label: 'Declined', value: 'Declined' }
-  ];
+      {/* Grid skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-3xl p-6 min-h-[340px]" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-  // Actions
-  const handleAccept = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'ACCEPTED' } : b));
-    toast.success('Booking request accepted!');
-  };
+const STATUS_FILTERS = [
+  { label: 'All', value: '' },
+  { label: 'Requested', value: 'REQUESTED' },
+  { label: 'Accepted', value: 'ACCEPTED' },
+  { label: 'Paid', value: 'PAID' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'Cancelled', value: 'CANCELLED' },
+  { label: 'Declined', value: 'DECLINED' }
+] as const;
 
-  const handleDecline = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'DECLINED' } : b));
-    toast.success('Booking request declined.');
-  };
+function TechnicianBookingsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleStartJob = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'IN_PROGRESS' } : b));
-    toast.success('Job started!');
-  };
+  // Parse state from URL search params
+  const currentStatus = searchParams.get('status') || '';
+  const currentPage = Number(searchParams.get('page')) || 1;
 
-  const handleCompleteJob = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'COMPLETED' } : b));
-    toast.success('Job marked as completed successfully!');
-  };
+  // Local state
+  const [bookings, setBookings] = useState<BookingAssignedItem[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Filter logic
-  const filteredBookings = bookings.filter(b => {
-    if (selectedTab === 'All') return true;
+  // Fetch bookings on query parameter change
+  const fetchBookings = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await getAssignedBookings({
+        status: currentStatus || undefined,
+        page: currentPage,
+        limit: 6, // 6 bookings per page for a 3-column layout
+      });
+      setBookings(response.data);
+      setMeta(response.meta);
+    } catch (err) {
+      console.error('Failed to fetch bookings:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentStatus, currentPage]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  const updateQueryParams = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
     
-    // Normalize string casing/mapping for filters
-    const statusMap: Record<string, string> = {
-      'REQUESTED': 'Requested',
-      'ACCEPTED': 'Accepted',
-      'PAID': 'Paid',
-      'IN_PROGRESS': 'In Progress',
-      'COMPLETED': 'Completed',
-      'CANCELLED': 'Cancelled',
-      'DECLINED': 'Declined'
-    };
-    
-    return statusMap[b.status] === selectedTab;
-  });
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    router.push(`/dashboard/technician/bookings?${params.toString()}`);
+  };
+
+  const handleFilterChange = (statusVal: string) => {
+    updateQueryParams({ status: statusVal, page: '1' });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    updateQueryParams({ page: String(newPage) });
+  };
+
+  if (isLoading) {
+    return <BookingsSkeleton />;
+  }
 
   return (
     <div className="space-y-8 text-left max-w-5xl mx-auto">
@@ -115,12 +139,12 @@ export default function TechnicianBookingsPage() {
 
       {/* ─── Filter Tabs ─── */}
       <div className="flex flex-wrap gap-2 pb-1 border-b border-slate-100 dark:border-slate-850">
-        {tabs.map((tab) => {
-          const isActive = selectedTab === tab.value;
+        {STATUS_FILTERS.map((tab) => {
+          const isActive = currentStatus === tab.value;
           return (
             <button
               key={tab.value}
-              onClick={() => setSelectedTab(tab.value as typeof selectedTab)}
+              onClick={() => handleFilterChange(tab.value)}
               className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                 isActive 
                   ? 'bg-blue-600 text-white shadow-sm' 
@@ -134,19 +158,18 @@ export default function TechnicianBookingsPage() {
       </div>
 
       {/* ─── Bookings Card Grid ─── */}
-      {filteredBookings.length === 0 ? (
+      {bookings.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-16 text-center text-xs font-semibold text-slate-400">
           No bookings match the selected status filter.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBookings.map((booking) => {
+          {bookings.map((booking) => {
             const isRequested = booking.status === 'REQUESTED';
             const isPaid = booking.status === 'PAID';
             const isAccepted = booking.status === 'ACCEPTED';
             const isInProgress = booking.status === 'IN_PROGRESS';
             const isCompleted = booking.status === 'COMPLETED';
-            const isDeclined = booking.status === 'DECLINED';
             
             return (
               <div 
@@ -155,22 +178,22 @@ export default function TechnicianBookingsPage() {
               >
                 {/* Header Profile Row */}
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-full ${booking.customer.avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-inner border border-slate-200/40`}>
-                      {booking.customer.avatarText}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-755 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner border border-slate-200/40">
+                      {booking.customer?.name ? booking.customer.name.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
                     </div>
-                    <div className="space-y-0.5">
-                      <h3 className="font-extrabold text-slate-900 dark:text-white text-sm leading-snug">
-                        {booking.customer.name}
+                    <div className="space-y-0.5 min-w-0">
+                      <h3 className="font-extrabold text-slate-900 dark:text-white text-sm leading-snug truncate">
+                        {booking.customer?.name || 'Customer'}
                       </h3>
-                      <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">
-                        {booking.service.name}
+                      <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider truncate">
+                        {booking.service?.name}
                       </p>
                     </div>
                   </div>
 
                   {/* Status Badge */}
-                  <div>
+                  <div className="shrink-0">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
                       isRequested
                         ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50'
@@ -181,7 +204,7 @@ export default function TechnicianBookingsPage() {
                         : isInProgress
                         ? 'bg-green-55 text-green-700 border-green-100 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/50'
                         : isCompleted
-                        ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-350 dark:border-slate-700/55'
+                        ? 'bg-slate-100 text-slate-705 border-slate-200 dark:bg-slate-800 dark:text-slate-350 dark:border-slate-700/55'
                         : 'bg-red-50 text-red-700 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50'
                     }`}>
                       {booking.status === 'IN_PROGRESS' ? 'In Progress' : booking.status.toLowerCase()}
@@ -190,71 +213,24 @@ export default function TechnicianBookingsPage() {
                 </div>
 
                 {/* Details Section */}
-                <div className="border-t border-b border-slate-50 dark:border-slate-850 py-4 my-4 space-y-3 text-xs text-slate-500 font-semibold leading-relaxed">
+                <div className="border-t border-b border-slate-50 dark:border-slate-850 py-4 my-4 space-y-3 text-xs text-slate-505 font-semibold leading-relaxed min-w-0">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span>{booking.scheduledDate}</span>
+                    <span>{formatFigmaDateTime(booking.scheduledDate)}</span>
                   </div>
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 truncate">
                     <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                    <span>{booking.address}</span>
+                    <span className="truncate">{booking.address}</span>
                   </div>
                 </div>
 
                 {/* Card CTA Actions */}
-                <div className="flex items-center gap-3 w-full">
-                  {isRequested && (
-                    <>
-                      <button
-                        onClick={() => handleAccept(booking.id)}
-                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleDecline(booking.id)}
-                        className="flex-1 py-3 border border-slate-200 dark:border-slate-850 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-850 dark:text-slate-400 font-bold rounded-xl text-xs transition-colors text-center"
-                      >
-                        Decline
-                      </button>
-                    </>
-                  )}
-
-                  {(isPaid || isAccepted) && (
-                    <button
-                      onClick={() => handleStartJob(booking.id)}
-                      className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
-                    >
-                      Start Job
-                    </button>
-                  )}
-
-                  {isInProgress && (
-                    <button
-                      onClick={() => handleCompleteJob(booking.id)}
-                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
-                    >
-                      Mark Complete
-                    </button>
-                  )}
-
-                  {isCompleted && (
-                    <button
-                      disabled
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold rounded-xl text-xs text-center cursor-not-allowed"
-                    >
-                      Job Completed
-                    </button>
-                  )}
-
-                  {isDeclined && (
-                    <button
-                      disabled
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold rounded-xl text-xs text-center cursor-not-allowed"
-                    >
-                      Job Declined
-                    </button>
-                  )}
+                <div className="w-full">
+                  <BookingActionButtons
+                    bookingId={booking.id}
+                    status={booking.status}
+                    onSuccess={fetchBookings}
+                  />
                 </div>
               </div>
             );
@@ -263,60 +239,56 @@ export default function TechnicianBookingsPage() {
       )}
 
       {/* ─── Pagination Footer ─── */}
-      <div className="pt-6 flex items-center justify-center gap-2">
-        <button 
-          onClick={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
-          className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4 shrink-0" />
-        </button>
-        
-        <button 
-          onClick={() => setCurrentPage(1)}
-          className={`h-9 w-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
-            currentPage === 1 ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          1
-        </button>
-        
-        <button 
-          onClick={() => setCurrentPage(2)}
-          className={`h-9 w-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
-            currentPage === 2 ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          2
-        </button>
+      {meta && meta.total > meta.limit && (
+        <div className="pt-6 flex items-center justify-center gap-2">
+          <button 
+            disabled={currentPage <= 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+            className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-55 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronLeft className="h-4.5 w-4.5 shrink-0" />
+          </button>
+          
+          {Array.from({ length: Math.ceil(meta.total / meta.limit) }).map((_, idx) => {
+            const pageNum = idx + 1;
+            const isPageActive = currentPage === pageNum;
+            return (
+              <button 
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`h-9 w-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
+                  isPageActive 
+                    ? 'bg-blue-600 text-white shadow-sm' 
+                    : 'border border-slate-200 dark:border-slate-850 hover:bg-slate-55 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
 
-        <button 
-          onClick={() => setCurrentPage(3)}
-          className={`h-9 w-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
-            currentPage === 3 ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          3
-        </button>
-
-        <span className="text-slate-400 font-bold select-none px-1">...</span>
-
-        <button 
-          onClick={() => setCurrentPage(8)}
-          className={`h-9 w-9 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
-            currentPage === 8 ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-400'
-          }`}
-        >
-          8
-        </button>
-
-        <button 
-          onClick={() => { if (currentPage < 8) setCurrentPage(currentPage + 1); }}
-          className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          <ChevronRight className="h-4 w-4 shrink-0" />
-        </button>
-      </div>
+          <button 
+            disabled={currentPage >= Math.ceil(meta.total / meta.limit)}
+            onClick={() => handlePageChange(currentPage + 1)}
+            className="p-2 border border-slate-200 dark:border-slate-850 hover:bg-slate-55 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-655 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronRight className="h-4.5 w-4.5 shrink-0" />
+          </button>
+        </div>
+      )}
 
     </div>
+  );
+}
+
+export default function TechnicianBookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-sm text-slate-400 animate-pulse">Loading Bookings…</p>
+      </div>
+    }>
+      <TechnicianBookingsContent />
+    </Suspense>
   );
 }
