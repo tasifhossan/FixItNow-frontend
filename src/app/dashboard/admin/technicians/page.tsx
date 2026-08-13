@@ -10,9 +10,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Palette,
-  Database,
+  Eye
 } from 'lucide-react';
 import api from '@/lib/api';
 import { Technician } from '@/lib/technicians';
@@ -34,83 +32,6 @@ interface TechListItem {
 }
 
 type VerificationFilter = 'All' | 'Pending' | 'Verified' | 'Rejected';
-
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-
-const MOCK_TECHNICIANS: TechListItem[] = [
-  {
-    id: 'mock-tech-1',
-    name: 'Marcus Johnson',
-    email: 'marcus.j@example.com',
-    phone: '(555) 123-4567',
-    skill: 'Master Electrician',
-    skills: ['Electrical Repair', 'Wiring Installation', 'Smart Home Setup'],
-    isVerified: false,
-    createdAt: '2023-10-24T00:00:00Z',
-    displayId: '#APP-8492',
-    averageRating: 4.8,
-    totalReviews: 47,
-  },
-  {
-    id: 'mock-tech-2',
-    name: 'Sarah Williams',
-    email: 'sarah.w@fixitnow.com',
-    phone: '(555) 456-7890',
-    skill: 'Licensed Plumber',
-    skills: ['Pipe Repair', 'Water Heater', 'Drain Cleaning'],
-    isVerified: true,
-    createdAt: '2023-09-15T00:00:00Z',
-    displayId: '#APP-7821',
-    averageRating: 4.9,
-    totalReviews: 63,
-  },
-  {
-    id: 'mock-tech-3',
-    name: 'Abidur Rahman',
-    email: 'abidur.r@gmail.com',
-    phone: '(555) 321-9876',
-    skill: 'HVAC Specialist',
-    skills: ['AC Repair', 'Heating Systems', 'Ventilation'],
-    isVerified: false,
-    createdAt: '2023-10-20T00:00:00Z',
-    displayId: '#APP-8510',
-    averageRating: 0,
-    totalReviews: 0,
-  },
-  {
-    id: 'mock-tech-4',
-    name: 'David Park',
-    email: 'd.park@example.com',
-    phone: '(555) 654-3210',
-    skill: 'Appliance Technician',
-    skills: ['Refrigerator Repair', 'Washer/Dryer', 'Dishwasher'],
-    isVerified: true,
-    createdAt: '2023-08-02T00:00:00Z',
-    displayId: '#APP-6930',
-    averageRating: 4.7,
-    totalReviews: 38,
-  },
-  {
-    id: 'mock-tech-5',
-    name: 'Sabbir Ahmed',
-    email: 's.ahmed@fixitnow.com',
-    phone: '(555) 789-0123',
-    skill: 'Expert Plumber',
-    skills: ['Pipe Leak Fix', 'Bathroom Installation', 'Water Systems'],
-    isVerified: false,
-    createdAt: '2023-10-22T00:00:00Z',
-    displayId: '#APP-8501',
-    averageRating: 0,
-    totalReviews: 0,
-  },
-];
-
-const MOCK_STATS = {
-  totalTechnicians: 850,
-  pendingVerification: 23,
-  verified: 620,
-  rejected: 12,
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -160,24 +81,29 @@ function TechniciansSkeleton() {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function AdminTechniciansPage() {
-  const [useMockData, setUseMockData] = useState(true);
   const [technicians, setTechnicians] = useState<TechListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
+  const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
   const itemsPerPage = 5;
 
-  const loadMockData = useCallback(() => {
-    setTechnicians(MOCK_TECHNICIANS);
-    setTotalEntries(MOCK_STATS.totalTechnicians);
-    setIsLoading(false);
-  }, []);
-
-  const loadLiveData = useCallback(async () => {
+  const loadTechniciansData = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Fetch stats
+      const statsRes = await api.get('/admin/stats');
+      const s = statsRes.data.data;
+      setStats({
+        total: s.totalTechnicians || 0,
+        verified: s.totalVerifiedTechnicians || 0,
+        pending: (s.totalTechnicians - s.totalVerifiedTechnicians) || 0,
+        rejected: 0
+      });
+
+      // Fetch technicians
       const res = await api.get('/technicians', {
         params: { includeUnverified: true, page: currentPage, limit: itemsPerPage },
       });
@@ -206,29 +132,26 @@ export default function AdminTechniciansPage() {
   }, [currentPage]);
 
   useEffect(() => {
-    if (useMockData) loadMockData();
-    else loadLiveData();
-  }, [useMockData, loadMockData, loadLiveData]);
+    loadTechniciansData();
+  }, [loadTechniciansData]);
 
-  // Filtering (mock mode)
-  const filteredTechnicians = useMockData
-    ? technicians.filter((tech) => {
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          if (
-            !tech.name.toLowerCase().includes(q) &&
-            !tech.email.toLowerCase().includes(q) &&
-            !tech.skill.toLowerCase().includes(q)
-          )
-            return false;
-        }
-        if (verificationFilter === 'Pending' && tech.isVerified) return false;
-        if (verificationFilter === 'Verified' && !tech.isVerified) return false;
-        return true;
-      })
-    : technicians;
+  // Filtering (live data client side fallback for query/status match)
+  const filteredTechnicians = technicians.filter((tech) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !tech.name.toLowerCase().includes(q) &&
+        !tech.email.toLowerCase().includes(q) &&
+        !tech.skill.toLowerCase().includes(q)
+      )
+        return false;
+    }
+    if (verificationFilter === 'Pending' && tech.isVerified) return false;
+    if (verificationFilter === 'Verified' && !tech.isVerified) return false;
+    return true;
+  });
 
-  const totalPages = Math.max(1, Math.ceil((useMockData ? MOCK_STATS.totalTechnicians : totalEntries) / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(totalEntries / itemsPerPage));
 
   if (isLoading) return <TechniciansSkeleton />;
 
@@ -237,18 +160,6 @@ export default function AdminTechniciansPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Technician Verification</h1>
-        <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm">
-          <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>Mock</span>
-          <button
-            onClick={() => { setUseMockData(!useMockData); setCurrentPage(1); }}
-            className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${useMockData ? 'bg-blue-600' : 'bg-emerald-500'}`}
-          >
-            <span className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${useMockData ? 'left-[3px]' : 'left-[21px]'}`} />
-          </button>
-          <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>Live</span>
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -259,7 +170,7 @@ export default function AdminTechniciansPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">Total Technicians</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{MOCK_STATS.totalTechnicians}</p>
+            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{stats.total}</p>
           </div>
         </div>
         <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
@@ -268,7 +179,7 @@ export default function AdminTechniciansPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">Pending Verification</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{MOCK_STATS.pendingVerification}</p>
+            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{stats.pending}</p>
           </div>
         </div>
         <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
@@ -277,7 +188,7 @@ export default function AdminTechniciansPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">Verified</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{MOCK_STATS.verified}</p>
+            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{stats.verified}</p>
           </div>
         </div>
         <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
@@ -286,7 +197,7 @@ export default function AdminTechniciansPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">Rejected</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{MOCK_STATS.rejected}</p>
+            <p className="text-2xl font-extrabold text-slate-800 leading-tight">{stats.rejected}</p>
           </div>
         </div>
       </div>
@@ -411,7 +322,7 @@ export default function AdminTechniciansPage() {
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
           <p className="text-xs text-slate-500 font-medium">
-            Showing {filteredTechnicians.length} of {useMockData ? MOCK_STATS.totalTechnicians : totalEntries} technicians
+            Showing {filteredTechnicians.length} of {totalEntries} technicians
           </p>
           <div className="flex items-center gap-1">
             <button
