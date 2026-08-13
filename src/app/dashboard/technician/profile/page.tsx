@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { 
   Check, 
   X, 
@@ -191,9 +192,11 @@ export default function TechnicianProfilePage() {
             <div className="flex flex-col sm:flex-row items-center gap-5">
               {/* Photo Avatar */}
               <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
-                <img 
+                <Image 
                   src="/mike_johnson_avatar.png" 
                   alt={profile?.user?.name || 'Technician'} 
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
                 />
                 {profile?.isVerified && (
