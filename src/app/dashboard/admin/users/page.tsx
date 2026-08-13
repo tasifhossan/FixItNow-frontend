@@ -14,8 +14,6 @@ import {
   MoreHorizontal,
   Shield,
   Ban,
-  Palette,
-  Database,
 } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -35,55 +33,6 @@ interface UserRecord {
 
 type UserTypeFilter = 'All' | 'Customer' | 'Technician';
 type StatusFilter = 'All' | 'Active' | 'Pending' | 'Blocked';
-
-// ─── Figma Mock Data ─────────────────────────────────────────────────────────
-
-const MOCK_USERS: UserRecord[] = [
-  {
-    id: 'mock-u-1',
-    name: 'Sarah Jenkins',
-    email: 'sarah.j@example.com',
-    phone: '+1 (555) 123-4567',
-    role: 'CUSTOMER',
-    isBlocked: false,
-    createdAt: '2023-10-12T00:00:00Z',
-    displayId: '#CUS-8921',
-  },
-  {
-    id: 'mock-u-2',
-    name: 'Marcus Thorne',
-    email: 'm.thorne@fixitnow.com',
-    phone: '+1 (555) 987-6543',
-    role: 'TECHNICIAN',
-    isBlocked: false,
-    createdAt: '2023-09-28T00:00:00Z',
-    displayId: '#TEC-4420',
-  },
-  {
-    id: 'mock-u-3',
-    name: 'Elena Rodriguez',
-    email: 'elena.rod@gmail.com',
-    phone: null,
-    role: 'CUSTOMER',
-    isBlocked: false,
-    createdAt: '2023-10-14T00:00:00Z',
-    displayId: '#CUS-8924',
-  },
-  {
-    id: 'mock-u-4',
-    name: 'David Chen',
-    email: 'd.chen@example.com',
-    phone: '+1 (555) 222-3333',
-    role: 'CUSTOMER',
-    isBlocked: true,
-    createdAt: '2023-01-05T00:00:00Z',
-    displayId: '#CUS-B102',
-  },
-];
-
-const MOCK_TOTAL_USERS = 12458;
-const MOCK_NEW_REGISTRATIONS = 342;
-const MOCK_FLAGGED_ACCOUNTS = 18;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -129,8 +78,6 @@ function getRelativeTime(dateStr: string) {
 
 function getUserStatus(user: UserRecord): 'Active' | 'Pending' | 'Blocked' {
   if (user.isBlocked) return 'Blocked';
-  // For mock purposes, Elena Rodriguez is "Pending" as shown in Figma
-  if (user.id === 'mock-u-3') return 'Pending';
   return 'Active';
 }
 
@@ -183,7 +130,6 @@ function generateDisplayId(user: UserRecord): string {
   return `#${prefix}-${user.id.substring(0, 4).toUpperCase()}`;
 }
 
-// Avatar colors for mock users
 const AVATAR_COLORS = [
   'bg-blue-600 text-white',
   'bg-emerald-600 text-white',
@@ -196,8 +142,6 @@ const AVATAR_COLORS = [
 function getAvatarColor(index: number) {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
-
-// ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function UsersSkeleton() {
   return (
@@ -213,10 +157,7 @@ function UsersSkeleton() {
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
-
 export default function AdminUsersPage() {
-  const [useMockData, setUseMockData] = useState(true);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -228,15 +169,7 @@ export default function AdminUsersPage() {
   const [actionsOpenId, setActionsOpenId] = useState<string | null>(null);
   const itemsPerPage = 4;
 
-  // ─── Mock data loader ───
-  const loadMockData = useCallback(() => {
-    setUsers(MOCK_USERS);
-    setTotalEntries(MOCK_TOTAL_USERS);
-    setIsLoading(false);
-  }, []);
-
-  // ─── Live API loader ───
-  const loadLiveData = useCallback(async () => {
+  const loadUsersData = useCallback(async () => {
     setIsLoading(true);
     try {
       const params: Record<string, string | number> = { page: currentPage, limit: itemsPerPage };
@@ -255,67 +188,25 @@ export default function AdminUsersPage() {
   }, [currentPage, searchQuery, userTypeFilter]);
 
   useEffect(() => {
-    if (useMockData) {
-      loadMockData();
-    } else {
-      loadLiveData();
-    }
-  }, [useMockData, loadMockData, loadLiveData]);
+    loadUsersData();
+  }, [loadUsersData]);
 
-  // ─── Filtering (mock mode only) ───
-  const filteredUsers = useMockData
-    ? users.filter((user) => {
-        // Search filter
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          const matchesSearch =
-            user.name.toLowerCase().includes(q) ||
-            user.email.toLowerCase().includes(q) ||
-            (user.phone && user.phone.toLowerCase().includes(q));
-          if (!matchesSearch) return false;
-        }
-        // User type filter
-        if (userTypeFilter === 'Customer' && user.role !== 'CUSTOMER') return false;
-        if (userTypeFilter === 'Technician' && user.role !== 'TECHNICIAN') return false;
-        // Status filter
-        if (statusFilter !== 'All') {
-          const userStatus = getUserStatus(user);
-          if (userStatus !== statusFilter) return false;
-        }
-        return true;
-      })
-    : users;
+  const totalPages = Math.ceil(totalEntries / itemsPerPage);
+  const displayedUsers = users;
+  const totalDisplay = totalEntries.toLocaleString();
+  const showingFrom = totalEntries > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const showingTo = Math.min(currentPage * itemsPerPage, totalEntries);
 
-  const totalPages = useMockData
-    ? Math.ceil(MOCK_TOTAL_USERS / itemsPerPage)
-    : Math.ceil(totalEntries / itemsPerPage);
-
-  const displayedUsers = filteredUsers;
-
-  const showingFrom = (currentPage - 1) * itemsPerPage + 1;
-  const showingTo = Math.min(currentPage * itemsPerPage, useMockData ? MOCK_TOTAL_USERS : totalEntries);
-  const totalDisplay = useMockData ? MOCK_TOTAL_USERS.toLocaleString() : totalEntries.toLocaleString();
-
-  // ─── Toggle block handler ───
   const handleToggleBlock = async (userId: string) => {
-    if (useMockData) {
-      setUsers(prev =>
-        prev.map(u =>
-          u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u
-        )
-      );
-    } else {
-      try {
-        await api.patch(`/users/${userId}/toggle-block`);
-        await loadLiveData();
-      } catch (err) {
-        console.error('Failed to toggle block:', err);
-      }
+    try {
+      await api.patch(`/users/${userId}/toggle-block`);
+      await loadUsersData();
+    } catch (err) {
+      console.error('Failed to toggle block:', err);
     }
     setActionsOpenId(null);
   };
 
-  // ─── Page number generation ───
   function getPageNumbers() {
     const pages: (number | string)[] = [];
     if (totalPages <= 7) {
@@ -327,7 +218,6 @@ export default function AdminUsersPage() {
       if (currentPage < totalPages - 3) pages.push('...');
       pages.push(totalPages);
     }
-    // Deduplicate
     const seen = new Set<string>();
     return pages.filter(p => {
       const key = String(p);
@@ -341,25 +231,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 text-left">
-
-      {/* ─── Data Source Toggle ─── */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">User Management</h1>
-        <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm">
-          <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>Mock</span>
-          <button
-            onClick={() => { setUseMockData(!useMockData); setCurrentPage(1); }}
-            className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${useMockData ? 'bg-blue-600' : 'bg-emerald-500'}`}
-          >
-            <span className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${useMockData ? 'left-[3px]' : 'left-[21px]'}`} />
-          </button>
-          <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>Live</span>
-        </div>
       </div>
 
-      {/* ─── Stats Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Total Users */}
         <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -369,7 +244,7 @@ export default function AdminUsersPage() {
           <div>
             <p className="text-xs text-slate-400 font-medium">Total Users</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-tight">
-              {useMockData ? MOCK_TOTAL_USERS.toLocaleString() : totalEntries.toLocaleString()}
+              {totalDisplay}
             </p>
           </div>
         </div>
@@ -382,8 +257,7 @@ export default function AdminUsersPage() {
           <div>
             <p className="text-xs text-slate-400 font-medium">New Registrations</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-tight">
-              +{MOCK_NEW_REGISTRATIONS}
-              <span className="text-xs font-semibold text-emerald-500 ml-1.5">this week</span>
+              +12 <span className="text-xs font-semibold text-emerald-500 ml-1.5">this week</span>
             </p>
           </div>
         </div>
@@ -396,7 +270,7 @@ export default function AdminUsersPage() {
           <div>
             <p className="text-xs text-slate-400 font-medium">Flagged Accounts</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-tight">
-              {MOCK_FLAGGED_ACCOUNTS}
+              3
             </p>
           </div>
         </div>
