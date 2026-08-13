@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import RoleGuard from '../../../components/RoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -21,7 +21,15 @@ export default function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
+  const [globalQuery, setGlobalQuery] = React.useState('');
+
+  const handleGlobalSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && globalQuery.trim()) {
+      router.push(`/dashboard/admin/users?search=${encodeURIComponent(globalQuery.trim())}`);
+    }
+  };
 
   const navItems = [
     { href: '/dashboard/admin', label: 'Overview', icon: LayoutDashboard, isActive: pathname === '/dashboard/admin' },
@@ -97,6 +105,9 @@ export default function AdminDashboardLayout({
               <input 
                 type="text" 
                 placeholder="Search users, technicians, emails..." 
+                value={globalQuery}
+                onChange={(e) => setGlobalQuery(e.target.value)}
+                onKeyDown={handleGlobalSearch}
                 className="w-full bg-transparent border-none text-xs focus:outline-none text-slate-700 font-medium placeholder:text-slate-400"
               />
             </div>

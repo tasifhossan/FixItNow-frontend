@@ -188,6 +188,15 @@ export default function AdminUsersPage() {
   }, [currentPage, searchQuery, userTypeFilter]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search).get('search');
+      if (search) {
+        setSearchQuery(search);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     loadUsersData();
   }, [loadUsersData]);
 
