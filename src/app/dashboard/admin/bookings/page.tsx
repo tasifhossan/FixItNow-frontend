@@ -272,7 +272,7 @@ export default function AdminBookingsOversightPage() {
           {/* Export PDF button */}
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-650 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
           >
             <Download className="h-3.5 w-3.5 text-white/80" />
             Export PDF
