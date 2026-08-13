@@ -14,8 +14,6 @@ import {
   Hammer,
   Car,
   ShieldAlert,
-  Database,
-  Palette,
   CheckCircle,
   X,
 } from 'lucide-react';
@@ -40,76 +38,6 @@ interface ServiceOffer {
   isActive: boolean;
 }
 
-// ─── Figma Mock Data ─────────────────────────────────────────────────────────
-
-const MOCK_CATEGORIES: Category[] = [
-  { id: 'cat-plumbing', name: 'Plumbing', servicesCount: 12, status: 'Active', iconKey: 'droplet' },
-  { id: 'cat-electrical', name: 'Electrical', servicesCount: 8, status: 'Active', iconKey: 'zap' },
-  { id: 'cat-cleaning', name: 'Cleaning', servicesCount: 15, status: 'Active', iconKey: 'sparkles' },
-];
-
-const MOCK_SERVICES: ServiceOffer[] = [
-  // Plumbing
-  {
-    id: 'srv-leak-repair',
-    categoryId: 'cat-plumbing',
-    name: 'Leak Repair',
-    description: 'Fix minor to major pipe leaks and water system issues.',
-    basePrice: 85.00,
-    isActive: true,
-  },
-  {
-    id: 'srv-pipe-install',
-    categoryId: 'cat-plumbing',
-    name: 'Pipe Installation',
-    description: 'Complete new pipe laying and layout adjustments.',
-    basePrice: 250.00,
-    isActive: false,
-  },
-  {
-    id: 'srv-drain-clean',
-    categoryId: 'cat-plumbing',
-    name: 'Drain Cleaning',
-    description: 'Unclogging and thorough cleaning of drains and sewerage outlets.',
-    basePrice: 120.00,
-    isActive: true,
-  },
-  // Electrical
-  {
-    id: 'srv-wiring-install',
-    categoryId: 'cat-electrical',
-    name: 'Wiring Installation',
-    description: 'Setup new electrical circuit lines and switches safely.',
-    basePrice: 150.00,
-    isActive: true,
-  },
-  {
-    id: 'srv-fan-repair',
-    categoryId: 'cat-electrical',
-    name: 'Ceiling Fan Repair',
-    description: 'Fix motor issues, capacitor replacements, or speed adjustments.',
-    basePrice: 45.00,
-    isActive: true,
-  },
-  // Cleaning
-  {
-    id: 'srv-sofa-clean',
-    categoryId: 'cat-cleaning',
-    name: 'Sofa Cleaning',
-    description: 'Deep vacuum and foam washing for sofa sets.',
-    basePrice: 60.00,
-    isActive: true,
-  },
-  {
-    id: 'srv-home-deep',
-    categoryId: 'cat-cleaning',
-    name: 'Full Home Deep Clean',
-    description: 'Complete cleaning including washrooms, kitchen, and balconies.',
-    basePrice: 200.00,
-    isActive: true,
-  },
-];
-
 const ICON_MAP: Record<string, React.ReactNode> = {
   droplet: <Droplet className="h-5 w-5" />,
   zap: <Zap className="h-5 w-5" />,
@@ -122,10 +50,9 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 // ─── Main Page Component ─────────────────────────────────────────────────────
 
 export default function AdminCategoriesServicesPage() {
-  const [useMockData, setUseMockData] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<ServiceOffer[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState('cat-plumbing');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -147,16 +74,10 @@ export default function AdminCategoriesServicesPage() {
 
   // Initial Load
   useEffect(() => {
-    if (useMockData) {
-      setCategories(MOCK_CATEGORIES);
-      setServices(MOCK_SERVICES);
-      setSelectedCategoryId('cat-plumbing');
-    } else {
-      fetchLiveData();
-    }
-  }, [useMockData]);
+    loadServicesData();
+  }, []);
 
-  const fetchLiveData = async () => {
+  const loadServicesData = async () => {
     setIsLoading(true);
     try {
       const categoriesRes = await api.get('/categories');
@@ -171,7 +92,7 @@ export default function AdminCategoriesServicesPage() {
       }));
 
       setCategories(formattedCategories);
-      if (formattedCategories.length > 0) {
+      if (formattedCategories.length > 0 && !selectedCategoryId) {
         setSelectedCategoryId(formattedCategories[0].id);
       }
 
@@ -188,7 +109,7 @@ export default function AdminCategoriesServicesPage() {
       setServices(formattedServices);
     } catch (err) {
       console.error('Failed to fetch categories or services:', err);
-      showToast('Failed to load live data from backend api.');
+      showToast('Failed to load data from backend api.');
     } finally {
       setIsLoading(false);
     }
@@ -220,26 +141,19 @@ export default function AdminCategoriesServicesPage() {
 
   // Toggle Service Status
   const handleToggleServiceStatus = async (serviceId: string) => {
-    if (useMockData) {
+    const targetService = services.find(s => s.id === serviceId);
+    if (!targetService) return;
+    try {
+      await api.patch(`/services/${serviceId}`, {
+        isActive: !targetService.isActive,
+      });
       setServices(prev =>
         prev.map(s => (s.id === serviceId ? { ...s, isActive: !s.isActive } : s))
       );
       showToast('Service status updated successfully!');
-    } else {
-      const targetService = services.find(s => s.id === serviceId);
-      if (!targetService) return;
-      try {
-        await api.patch(`/services/${serviceId}`, {
-          isActive: !targetService.isActive,
-        });
-        setServices(prev =>
-          prev.map(s => (s.id === serviceId ? { ...s, isActive: !s.isActive } : s))
-        );
-        showToast('Service status updated successfully!');
-      } catch (err) {
-        console.error('Failed to toggle service status:', err);
-        showToast('Failed to update service status.');
-      }
+    } catch (err) {
+      console.error('Failed to toggle service status:', err);
+      showToast('Failed to update service status.');
     }
   };
 
@@ -248,42 +162,26 @@ export default function AdminCategoriesServicesPage() {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
 
-    if (useMockData) {
-      const newId = `cat-${Date.now()}`;
-      const newCat: Category = {
-        id: newId,
+    try {
+      const res = await api.post('/categories', {
         name: newCategoryName,
+      });
+      const created = res.data.data;
+      const newCat: Category = {
+        id: created.id,
+        name: created.name,
         servicesCount: 0,
         status: 'Active',
         iconKey: newCategoryIcon,
       };
       setCategories(prev => [...prev, newCat]);
-      setSelectedCategoryId(newId);
+      setSelectedCategoryId(created.id);
       setShowAddCategoryModal(false);
       setNewCategoryName('');
-      showToast(`Category "${newCategoryName}" added successfully!`);
-    } else {
-      try {
-        const res = await api.post('/categories', {
-          name: newCategoryName,
-        });
-        const created = res.data.data;
-        const newCat: Category = {
-          id: created.id,
-          name: created.name,
-          servicesCount: 0,
-          status: 'Active',
-          iconKey: newCategoryIcon,
-        };
-        setCategories(prev => [...prev, newCat]);
-        setSelectedCategoryId(created.id);
-        setShowAddCategoryModal(false);
-        setNewCategoryName('');
-        showToast(`Category "${created.name}" created successfully!`);
-      } catch (err) {
-        console.error('Failed to create category:', err);
-        showToast('Failed to create category.');
-      }
+      showToast(`Category "${created.name}" created successfully!`);
+    } catch (err) {
+      console.error('Failed to create category:', err);
+      showToast('Failed to create category.');
     }
   };
 
@@ -295,14 +193,20 @@ export default function AdminCategoriesServicesPage() {
     const basePriceNum = parseFloat(newServicePrice);
     if (isNaN(basePriceNum)) return;
 
-    if (useMockData) {
-      const newId = `srv-${Date.now()}`;
-      const newSrv: ServiceOffer = {
-        id: newId,
-        categoryId: selectedCategoryId,
+    try {
+      const res = await api.post('/services', {
         name: newServiceName,
         description: newServiceDesc,
         basePrice: basePriceNum,
+        categoryId: selectedCategoryId,
+      });
+      const created = res.data.data;
+      const newSrv: ServiceOffer = {
+        id: created.id,
+        categoryId: selectedCategoryId,
+        name: created.name,
+        description: created.description || '',
+        basePrice: created.basePrice || created.price || 0,
         isActive: true,
       };
       setServices(prev => [...prev, newSrv]);
@@ -315,39 +219,10 @@ export default function AdminCategoriesServicesPage() {
       setNewServiceName('');
       setNewServiceDesc('');
       setNewServicePrice('');
-      showToast(`Service "${newServiceName}" added!`);
-    } else {
-      try {
-        const res = await api.post('/services', {
-          name: newServiceName,
-          description: newServiceDesc,
-          basePrice: basePriceNum,
-          categoryId: selectedCategoryId,
-        });
-        const created = res.data.data;
-        const newSrv: ServiceOffer = {
-          id: created.id,
-          categoryId: selectedCategoryId,
-          name: created.name,
-          description: created.description || '',
-          basePrice: created.basePrice || created.price || 0,
-          isActive: true,
-        };
-        setServices(prev => [...prev, newSrv]);
-        setCategories(prev =>
-          prev.map(c =>
-            c.id === selectedCategoryId ? { ...c, servicesCount: c.servicesCount + 1 } : c
-          )
-        );
-        setShowAddServiceModal(false);
-        setNewServiceName('');
-        setNewServiceDesc('');
-        setNewServicePrice('');
-        showToast(`Service "${created.name}" created successfully!`);
-      } catch (err) {
-        console.error('Failed to create service:', err);
-        showToast('Failed to create service.');
-      }
+      showToast(`Service "${created.name}" created successfully!`);
+    } catch (err) {
+      console.error('Failed to create service:', err);
+      showToast('Failed to create service.');
     }
   };
 
@@ -368,7 +243,12 @@ export default function AdminCategoriesServicesPage() {
     const basePriceNum = parseFloat(newServicePrice);
     if (isNaN(basePriceNum)) return;
 
-    if (useMockData) {
+    try {
+      await api.patch(`/services/${editingService.id}`, {
+        name: newServiceName,
+        description: newServiceDesc,
+        basePrice: basePriceNum,
+      });
       setServices(prev =>
         prev.map(s =>
           s.id === editingService.id
@@ -382,30 +262,9 @@ export default function AdminCategoriesServicesPage() {
       setNewServiceDesc('');
       setNewServicePrice('');
       showToast('Service updated successfully!');
-    } else {
-      try {
-        await api.patch(`/services/${editingService.id}`, {
-          name: newServiceName,
-          description: newServiceDesc,
-          basePrice: basePriceNum,
-        });
-        setServices(prev =>
-          prev.map(s =>
-            s.id === editingService.id
-              ? { ...s, name: newServiceName, description: newServiceDesc, basePrice: basePriceNum }
-              : s
-          )
-        );
-        setShowEditServiceModal(false);
-        setEditingService(null);
-        setNewServiceName('');
-        setNewServiceDesc('');
-        setNewServicePrice('');
-        showToast('Service updated successfully!');
-      } catch (err) {
-        console.error('Failed to edit service:', err);
-        showToast('Failed to update service.');
-      }
+    } catch (err) {
+      console.error('Failed to edit service:', err);
+      showToast('Failed to update service.');
     }
   };
 
@@ -413,61 +272,31 @@ export default function AdminCategoriesServicesPage() {
   const handleDeleteService = async (serviceId: string) => {
     if (!window.confirm('Are you sure you want to delete this service?')) return;
 
-    if (useMockData) {
+    try {
+      await api.delete(`/services/${serviceId}`);
       setServices(prev => prev.filter(s => s.id !== serviceId));
       setCategories(prev =>
         prev.map(c =>
           c.id === selectedCategoryId ? { ...c, servicesCount: Math.max(0, c.servicesCount - 1) } : c
         )
       );
-      showToast('Service deleted.');
-    } else {
-      try {
-        await api.delete(`/services/${serviceId}`);
-        setServices(prev => prev.filter(s => s.id !== serviceId));
-        setCategories(prev =>
-          prev.map(c =>
-            c.id === selectedCategoryId ? { ...c, servicesCount: Math.max(0, c.servicesCount - 1) } : c
-          )
-        );
-        showToast('Service deleted successfully.');
-      } catch (err) {
-        console.error('Failed to delete service:', err);
-        showToast('Failed to delete service.');
-      }
+      showToast('Service deleted successfully.');
+    } catch (err) {
+      console.error('Failed to delete service:', err);
+      showToast('Failed to delete service.');
     }
   };
 
   return (
     <div className="space-y-6 text-left">
       
-      {/* ─── Header Toggler ─── */}
+      {/* ─── Header ─── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Categories & Services</h1>
           <p className="text-xs text-slate-400 font-medium mt-1">
             Manage service categories, pricing, and availability.
           </p>
-        </div>
-        
-        {/* Toggle mode */}
-        <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm shrink-0">
-          <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>Mock</span>
-          <button
-            onClick={() => setUseMockData(!useMockData)}
-            className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${
-              useMockData ? 'bg-blue-600' : 'bg-emerald-500'
-            }`}
-          >
-            <span
-              className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                useMockData ? 'left-[3px]' : 'left-[21px]'
-              }`}
-            />
-          </button>
-          <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>Live</span>
         </div>
       </div>
 
@@ -627,7 +456,7 @@ export default function AdminCategoriesServicesPage() {
 
                           {/* Base Price */}
                           <td className="px-6 py-4 font-extrabold text-slate-800">
-                            ${srv.basePrice.toFixed(2)}
+                            ৳{srv.basePrice.toFixed(2)}
                           </td>
 
                           {/* Status Switch */}
@@ -797,7 +626,7 @@ export default function AdminCategoriesServicesPage() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  Base Price ($)
+                  Base Price (৳)
                 </label>
                 <input
                   type="number"
@@ -875,7 +704,7 @@ export default function AdminCategoriesServicesPage() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  Base Price ($)
+                  Base Price (৳)
                 </label>
                 <input
                   type="number"
