@@ -10,10 +10,9 @@ import {
   UserCheck, 
   Wrench, 
   CalendarDays, 
-  LogOut,
-  Settings
+  LogOut
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import Logo from '@/components/Logo';
 
 export default function TechnicianDashboardLayout({
   children,
@@ -39,31 +38,7 @@ export default function TechnicianDashboardLayout({
           <div className="flex-1 flex flex-col">
             
             {/* Logo area */}
-            {isBookingsActive ? (
-              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-850 flex flex-col gap-3">
-                <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400 select-none">
-                  Tech Dashboard
-                </span>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px] shrink-0 border border-slate-200/50">
-                    JD
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">John Doe</span>
-                    <span className="text-[9px] font-bold text-slate-400">Verified Provider</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-850 flex flex-col gap-0.5">
-                <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400 select-none">
-                  ServiceHub
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Technician Portal
-                </span>
-              </div>
-            )}
+            <Logo />
 
             {/* Navigation links */}
             <nav className="p-4 pr-0 space-y-1">
@@ -123,22 +98,6 @@ export default function TechnicianDashboardLayout({
 
           {/* Bottom section: Consistent Action Button & Logout */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-850 space-y-2.5">
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              <span>Accept New Jobs</span>
-            </button>
-            {isBookingsActive && (
-              <button
-                type="button"
-                onClick={() => toast.success('Settings dialog triggered (mock)')}
-                className="flex w-full items-center gap-3 px-4 py-2 rounded-xl text-sm font-semibold text-slate-655 hover:text-blue-650 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-blue-405 transition-all duration-200 cursor-pointer"
-              >
-                <Settings className="h-5 w-5 shrink-0" />
-                <span>Settings</span>
-              </button>
-            )}
             <button
               onClick={() => logout()}
               className="flex w-full items-center gap-3 px-4 py-2 rounded-xl text-sm font-semibold text-slate-505 hover:bg-slate-55 dark:text-slate-400 dark:hover:bg-slate-850/50 transition-all duration-200"

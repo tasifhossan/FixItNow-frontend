@@ -41,8 +41,8 @@ export default function TechnicianBookingDetailsPage({ params }: BookingDetailPa
       cityStateZip: 'Austin, TX 78701'
     },
     payment: {
-      total: '185.00',
-      status: 'Pending' // Pending | Paid
+      total: '185',
+      status: 'Paid' // Pending | Paid
     }
   });
 
@@ -241,7 +241,7 @@ export default function TechnicianBookingDetailsPage({ params }: BookingDetailPa
                   <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-200">
                     <span className="font-bold">Total:</span>
                     <span className="text-slate-900 dark:text-white font-extrabold text-base">
-                      ${booking.payment.total}
+                      ৳{booking.payment.total}
                     </span>
                   </div>
 
