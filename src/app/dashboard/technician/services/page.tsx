@@ -1,94 +1,109 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getServices, Service } from '@/lib/services';
+import { getMyTechnicianProfile, assignServices, removeService } from '@/lib/technicianProfile';
+import { getTechnicianById } from '@/lib/technicians';
+
+function ServicesSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse text-left max-w-5xl mx-auto">
+      {/* Title skeleton */}
+      <div className="space-y-2">
+        <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        <div className="h-4 w-80 bg-slate-100 dark:bg-slate-850 rounded-lg" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        {/* Left Column (3/5 Width) */}
+        <div className="lg:col-span-3 space-y-5">
+          <div className="h-6 w-40 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {Array.from({ length: 2 }).map((_, idx) => (
+              <div key={idx} className="h-36 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-5" />
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column (2/5 Width) */}
+        <div className="lg:col-span-2">
+          <div className="h-96 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function TechnicianServicesPage() {
-  
-  // Local state for Assigned Services matching Figma screenshot
-  const [assignedServices, setAssignedServices] = useState([
-    {
-      id: 'assigned-1',
-      name: 'Pipe Leak Repair',
-      category: 'Plumbing',
-      basePrice: 1200,
-    },
-    {
-      id: 'assigned-2',
-      name: 'Faucet Installation',
-      category: 'Plumbing',
-      basePrice: 800,
-    },
-  ]);
+  const [assignedServices, setAssignedServices] = useState<Service[]>([]);
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Local state for Available Services (to add) matching Figma screenshot
-  const [availableServices, setAvailableServices] = useState([
-    {
-      id: 'avail-1',
-      name: 'Ceiling Fan Repair',
-      category: 'Electrical',
-      standardPrice: 500,
-    },
-    {
-      id: 'avail-2',
-      name: 'Switchboard Replacement',
-      category: 'Electrical',
-      standardPrice: 350,
-    },
-  ]);
+  const fetchServicesData = async () => {
+    try {
+      const profileData = await getMyTechnicianProfile();
+      const [fullProfile, allServicesResponse] = await Promise.all([
+        getTechnicianById(profileData.id),
+        getServices({ limit: 100 }),
+      ]);
+      const assigned = fullProfile.services || [];
+      setAssignedServices(assigned);
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Unassign/Remove service handler
-  const handleRemoveService = (serviceId: string) => {
-    const target = assignedServices.find(s => s.id === serviceId);
-    if (!target) return;
-
-    // Move it back to available list
-    setAvailableServices(prev => [
-      ...prev,
-      {
-        id: target.id,
-        name: target.name,
-        category: target.category,
-        standardPrice: target.basePrice
-      }
-    ]);
-
-    // Remove from assigned list
-    setAssignedServices(prev => prev.filter(s => s.id !== serviceId));
-    toast.success(`Removed "${target.name}" from your services.`);
+      // Compute available services (all services minus assigned ones)
+      const available = allServicesResponse.data.filter(
+        s => !assigned.some(as => as.id === s.id)
+      );
+      setAvailableServices(available);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load services data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Add service handler
-  const handleAddService = (serviceId: string) => {
-    const target = availableServices.find(s => s.id === serviceId);
-    if (!target) return;
+  useEffect(() => {
+    fetchServicesData();
+  }, []);
 
-    // Move to assigned list
-    setAssignedServices(prev => [
-      ...prev,
-      {
-        id: target.id,
-        name: target.name,
-        category: target.category,
-        basePrice: target.standardPrice
-      }
-    ]);
-
-    // Remove from available list
-    setAvailableServices(prev => prev.filter(s => s.id !== serviceId));
-    toast.success(`Added "${target.name}" to your services!`);
+  const handleAddService = async (serviceId: string) => {
+    try {
+      await assignServices([serviceId]);
+      toast.success('Service added to your profile!');
+      fetchServicesData();
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Failed to add service');
+    }
   };
+
+  const handleRemoveService = async (serviceId: string) => {
+    try {
+      await removeService(serviceId);
+      toast.success('Service removed from your profile.');
+      fetchServicesData();
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Failed to remove service');
+    }
+  };
+
+  if (isLoading) {
+    return <ServicesSkeleton />;
+  }
 
   // Filter available services based on search query
   const filteredAvailableServices = availableServices.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.category.toLowerCase().includes(searchQuery.toLowerCase())
+    s.category?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -127,7 +142,7 @@ export default function TechnicianServicesPage() {
                   {/* Close/Remove x button */}
                   <button 
                     onClick={() => handleRemoveService(service.id)}
-                    className="absolute top-4 right-4 p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute top-4 right-4 p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-655 transition-colors cursor-pointer"
                   >
                     <X className="h-4 w-4 shrink-0" />
                   </button>
@@ -136,7 +151,7 @@ export default function TechnicianServicesPage() {
                     {/* Category tag */}
                     <div>
                       <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 text-[10px] font-extrabold rounded-md border border-blue-100/50 dark:border-blue-900/30 uppercase tracking-wider">
-                        {service.category}
+                        {service.category?.name || 'Service'}
                       </span>
                     </div>
 
@@ -181,11 +196,7 @@ export default function TechnicianServicesPage() {
             </div>
 
             {/* Available Services List */}
-            <div className="space-y-4">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Electrical
-              </div>
-
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
               {filteredAvailableServices.length === 0 ? (
                 <p className="text-xs text-slate-400 italic py-2">
                   No matching services found.
@@ -202,13 +213,13 @@ export default function TechnicianServicesPage() {
                           {service.name}
                         </h4>
                         <p className="text-[10px] text-slate-500 font-semibold">
-                          Standard pricing <span className="font-bold text-slate-705 dark:text-slate-300">৳ {service.standardPrice}</span>
+                          Standard pricing <span className="font-bold text-slate-705 dark:text-slate-300">৳ {service.basePrice}</span>
                         </p>
                       </div>
 
                       <button
                         onClick={() => handleAddService(service.id)}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm shrink-0 active:scale-95 cursor-pointer"
+                        className="px-4 py-2 bg-[#78350F] hover:bg-[#632a0a] text-white font-bold rounded-xl text-[10px] transition-all shadow-sm shrink-0 active:scale-95 cursor-pointer"
                       >
                         + Add
                       </button>
