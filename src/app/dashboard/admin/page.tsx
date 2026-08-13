@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   Users, 
@@ -10,10 +10,14 @@ import {
   Briefcase, 
   CheckCircle2, 
   Info,
-  Layers
+  Layers,
+  Database,
+  Palette
 } from 'lucide-react';
 import api from '@/lib/api';
 import { Technician } from '@/lib/technicians';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AdminStats {
   totalUsers: number;
@@ -45,93 +49,199 @@ interface RecentBooking {
   scheduledDate: string;
 }
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse text-left">
-      <div className="h-8 w-48 bg-slate-200 rounded-lg" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 6 }).map((_, idx) => (
-          <div key={idx} className="h-24 bg-slate-200 rounded-2xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="h-80 bg-slate-200 rounded-3xl" />
-        <div className="lg:col-span-2 h-80 bg-slate-200 rounded-3xl" />
-      </div>
-    </div>
-  );
+interface PendingTech {
+  id: string;
+  name: string;
+  initials: string;
+  skill: string;
+  isVerified: boolean;
 }
 
-// Helper to format revenue (e.g. 2400000 -> 2.4M, 1500 -> 1.5K)
+// ─── Figma Mock Data ─────────────────────────────────────────────────────────
+
+const MOCK_STATS: AdminStats = {
+  totalUsers: 12450,
+  totalCustomers: 11600,
+  totalTechnicians: 850,
+  totalBookings: 200,
+  bookingsByStatus: {
+    REQUESTED: 30,
+    ACCEPTED: 40,
+    DECLINED: 0,
+    PAID: 20,
+    IN_PROGRESS: 50,
+    COMPLETED: 50,
+    CANCELLED: 10,
+  },
+  totalRevenue: 2400000,
+  totalVerifiedTechnicians: 620,
+  totalCategories: 12,
+  totalServices: 48,
+};
+
+const MOCK_PENDING_TECHS: PendingTech[] = [
+  { id: 'mock-pt-1', name: 'Abidur Rahman', initials: 'AR', skill: 'Electrician', isVerified: false },
+  { id: 'mock-pt-2', name: 'Sabbir Ahmed', initials: 'SA', skill: 'Plumber', isVerified: false },
+];
+
+const MOCK_RECENT_BOOKINGS: RecentBooking[] = [
+  {
+    id: 'mock-b-1',
+    customer: { name: 'John Doe' },
+    technician: { user: { name: 'Abidur Rahman' } },
+    service: { name: 'AC Repair' },
+    status: 'IN_PROGRESS',
+    totalAmount: 1500,
+    scheduledDate: '2023-10-24',
+  },
+  {
+    id: 'mock-b-2',
+    customer: { name: 'Jane Smith' },
+    technician: { user: { name: 'Sabbir Ahmed' } },
+    service: { name: 'Pipe Leak Fix' },
+    status: 'REQUESTED',
+    totalAmount: 800,
+    scheduledDate: '2023-10-24',
+  },
+  {
+    id: 'mock-b-3',
+    customer: { name: 'Karim Ali' },
+    technician: { user: { name: 'Robiul Islam' } },
+    service: { name: 'Fridge Repair' },
+    status: 'COMPLETED',
+    totalAmount: 2200,
+    scheduledDate: '2023-10-23',
+  },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function formatRevenue(amount: number) {
-  if (amount >= 1000000) {
-    return `৳${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `৳${(amount / 1000).toFixed(1)}K`;
-  }
+  if (amount >= 1000000) return `৳${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `৳${(amount / 1000).toFixed(1)}K`;
   return `৳${amount.toLocaleString()}`;
 }
 
-// Helper to format date exactly like Figma (e.g., Oct 24, 2023)
 function formatFigmaDate(dateStr: string) {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
     return dateStr;
   }
 }
 
+function getStatusBadgeClasses(status: string) {
+  switch (status) {
+    case 'REQUESTED': return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'ACCEPTED': return 'bg-blue-50 text-blue-700 border-blue-200';
+    case 'IN_PROGRESS': return 'bg-green-50 text-green-700 border-green-200';
+    case 'COMPLETED': return 'bg-slate-100 text-slate-600 border-slate-200';
+    case 'CANCELLED': return 'bg-red-50 text-red-700 border-red-200';
+    case 'PAID': return 'bg-purple-50 text-purple-700 border-purple-200';
+    default: return 'bg-slate-100 text-slate-600 border-slate-200';
+  }
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse text-left">
+      <div className="h-8 w-48 bg-slate-200 rounded-lg" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="h-[100px] bg-slate-200 rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {Array.from({ length: 3 }).map((_, idx) => (
+          <div key={idx} className={`h-[100px] bg-slate-200 rounded-2xl ${idx === 2 ? 'md:col-span-2' : ''}`} />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="h-80 bg-slate-200 rounded-2xl" />
+        <div className="h-80 bg-slate-200 rounded-2xl" />
+      </div>
+      <div className="h-64 bg-slate-200 rounded-2xl" />
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export default function AdminDashboardPage() {
+  const [useMockData, setUseMockData] = useState(true);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
-  const [pendingTechs, setPendingTechs] = useState<Technician[]>([]);
+  const [pendingTechs, setPendingTechs] = useState<PendingTech[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [verifiedIds, setVerifiedIds] = useState<Set<string>>(new Set());
+  const [mockVerifiedCount, setMockVerifiedCount] = useState(MOCK_STATS.totalVerifiedTechnicians);
 
-  const fetchAdminData = async () => {
+  // Load mock data
+  const loadMockData = useCallback(() => {
+    setStats({ ...MOCK_STATS, totalVerifiedTechnicians: mockVerifiedCount });
+    setRecentBookings(MOCK_RECENT_BOOKINGS);
+    setPendingTechs(MOCK_PENDING_TECHS.filter(t => !verifiedIds.has(t.id)));
+    setIsLoading(false);
+    setErrorMsg(null);
+  }, [mockVerifiedCount, verifiedIds]);
+
+  // Load live API data
+  const loadLiveData = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
     try {
-      // 1. Fetch dashboard stats
       const statsRes = await api.get('/admin/stats');
       setStats(statsRes.data.data);
 
-      // 2. Fetch recent bookings with complete amount & scheduled date
-      const bookingsRes = await api.get('/admin/bookings', {
-        params: { limit: 5 }
-      });
+      const bookingsRes = await api.get('/admin/bookings', { params: { limit: 5 } });
       setRecentBookings(bookingsRes.data.data.data || []);
 
-      // 3. Fetch technicians and filter for unverified ones
-      const techsRes = await api.get('/technicians', {
-        params: { includeUnverified: true, limit: 100 }
-      });
+      const techsRes = await api.get('/technicians', { params: { includeUnverified: true, limit: 100 } });
       const allTechs: Technician[] = techsRes.data.data.data || [];
       const unverified = allTechs.filter(tech => !tech.isVerified);
-      setPendingTechs(unverified.slice(0, 5)); // show top 5 pending
+      setPendingTechs(
+        unverified.slice(0, 5).map(tech => ({
+          id: tech.id,
+          name: tech.user?.name || 'Unknown',
+          initials: (tech.user?.name || 'T').split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2),
+          skill: tech.skills?.[0] || 'Technician',
+          isVerified: false,
+        }))
+      );
     } catch (err) {
       console.error('Failed to load admin dashboard:', err);
+      setErrorMsg('Failed to load live data. The backend server may not be running.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchAdminData();
   }, []);
 
+  useEffect(() => {
+    if (useMockData) {
+      loadMockData();
+    } else {
+      loadLiveData();
+    }
+  }, [useMockData, loadMockData, loadLiveData]);
+
+  // Handle verify for mock mode
   const handleVerifyTechnician = async (techId: string) => {
     setErrorMsg(null);
-    try {
-      await api.patch(`/technicians/${techId}/verify`);
-      await fetchAdminData(); // refresh data
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setErrorMsg(e.response?.data?.message || e.message || 'Failed to verify technician.');
+    if (useMockData) {
+      setVerifiedIds(prev => new Set(prev).add(techId));
+      setMockVerifiedCount(prev => prev + 1);
+    } else {
+      try {
+        await api.patch(`/technicians/${techId}/verify`);
+        await loadLiveData();
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { message?: string } }; message?: string };
+        setErrorMsg(e.response?.data?.message || e.message || 'Failed to verify technician.');
+      }
     }
   };
 
@@ -140,234 +250,266 @@ export default function AdminDashboardPage() {
   }
 
   // Calculate percentages for Bookings by Status
-  const totalBookingsCount = stats.totalBookings || 1; // avoid division by zero
-  const getPercentage = (count: number) => {
-    return Math.round((count / totalBookingsCount) * 100);
-  };
+  const totalBookingsCount = stats.totalBookings || 1;
+  const getPercentage = (count: number) => Math.round((count / totalBookingsCount) * 100);
+
+  const statusItems = [
+    { label: 'Requested', color: 'bg-amber-400', count: stats.bookingsByStatus.REQUESTED },
+    { label: 'Accepted', color: 'bg-blue-500', count: stats.bookingsByStatus.ACCEPTED },
+    { label: 'Paid', color: 'bg-purple-500', count: stats.bookingsByStatus.PAID },
+    { label: 'In Progress', color: 'bg-green-500', count: stats.bookingsByStatus.IN_PROGRESS },
+    { label: 'Completed', color: 'bg-slate-400', count: stats.bookingsByStatus.COMPLETED },
+    { label: 'Cancelled', color: 'bg-red-500', count: stats.bookingsByStatus.CANCELLED },
+  ];
 
   return (
-    <div className="space-y-8 text-left">
-      
-      {/* ─── Header ─── */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Admin Dashboard</h1>
+    <div className="space-y-6 text-left">
+
+      {/* ─── Data Source Toggle ─── */}
+      <div className="flex items-center justify-end">
+        <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm">
+          <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
+          <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>
+            Mock
+          </span>
+          <button
+            onClick={() => setUseMockData(!useMockData)}
+            className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${
+              useMockData ? 'bg-blue-600' : 'bg-emerald-500'
+            }`}
+          >
+            <span
+              className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                useMockData ? 'left-[3px]' : 'left-[21px]'
+              }`}
+            />
+          </button>
+          <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
+          <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>
+            Live
+          </span>
+        </div>
       </div>
 
       {errorMsg && (
         <div className="p-4 bg-red-50 border border-red-100 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
-          <Info className="h-4.5 w-4.5 shrink-0 text-red-650" />
+          <Info className="h-4 w-4 shrink-0 text-red-500" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* ─── Overview Stats Cards Grid ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ─── Row 1: 4 Stats Cards ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* Total Users */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Users</h3>
-            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Total Users</h3>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none">
               {stats.totalUsers.toLocaleString()}
             </p>
           </div>
-          <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl">
-            <Users className="h-5.5 w-5.5" />
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <Users className="h-5 w-5" />
           </div>
         </div>
 
         {/* Total Technicians */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Technicians</h3>
-            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Total Technicians</h3>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none">
               {stats.totalTechnicians.toLocaleString()}
             </p>
           </div>
-          <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl">
-            <UserCheck className="h-5.5 w-5.5" />
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+            <UserCheck className="h-5 w-5" />
           </div>
         </div>
 
         {/* Verified Techs */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verified Techs</h3>
-            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Verified Techs</h3>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none">
               {stats.totalVerifiedTechnicians.toLocaleString()}
             </p>
           </div>
-          <div className="p-3.5 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-2xl">
-            <ShieldCheck className="h-5.5 w-5.5" />
+          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
+            <ShieldCheck className="h-5 w-5" />
           </div>
         </div>
 
         {/* Total Revenue */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Revenue</h3>
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Total Revenue</h3>
             <p className="text-3xl font-extrabold text-amber-500 leading-none">
               {formatRevenue(stats.totalRevenue)}
             </p>
           </div>
-          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/20 text-amber-500 rounded-2xl">
-            <CreditCard className="h-5.5 w-5.5" />
+          <div className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+            <CreditCard className="h-5 w-5" />
           </div>
         </div>
-
       </div>
 
-      {/* Row 2: Categories, Services, System Health */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {/* ─── Row 2: Categories, Services, System Health ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* Total Categories */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Categories</h3>
-            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Total Categories</h3>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none">
               {stats.totalCategories}
             </p>
           </div>
-          <div className="p-3.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl">
-            <Layers className="h-5.5 w-5.5" />
+          <div className="p-3 bg-slate-100 text-slate-500 rounded-xl">
+            <Layers className="h-5 w-5" />
           </div>
         </div>
 
         {/* Total Services */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 flex items-center justify-between gap-5 shadow-sm">
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="space-y-1">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Services</h3>
-            <p className="text-3xl font-extrabold text-slate-850 dark:text-white leading-none">
+            <h3 className="text-[11px] font-semibold text-slate-400 tracking-wide">Total Services</h3>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none">
               {stats.totalServices}
             </p>
           </div>
-          <div className="p-3.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl">
-            <Briefcase className="h-5.5 w-5.5" />
+          <div className="p-3 bg-slate-100 text-slate-500 rounded-xl">
+            <Briefcase className="h-5 w-5" />
           </div>
         </div>
 
-        {/* System Health Card (Double Width) */}
-        <div className="bg-white border border-slate-200/60 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-6 shadow-sm flex items-center justify-between gap-5 md:col-span-2">
-          <div className="space-y-1">
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">System Health</h3>
-            <p className="text-xs text-slate-450 font-medium">All core services operational.</p>
+        {/* System Health - spans 2 cols on lg */}
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm flex items-center justify-between lg:col-span-2 hover:shadow-md transition-shadow duration-300">
+          <div className="space-y-0.5">
+            <h3 className="font-bold text-slate-800 text-[15px]">System Health</h3>
+            <p className="text-xs text-slate-400 font-medium">All core services operational.</p>
           </div>
-          <div className="text-green-500 shrink-0">
-            <CheckCircle2 className="h-10 w-10 text-green-500" strokeWidth={1.5} />
+          {/* Animated green ring with checkmark */}
+          <div className="relative h-12 w-12 shrink-0">
+            <svg className="h-12 w-12" viewBox="0 0 48 48">
+              {/* Background circle */}
+              <circle cx="24" cy="24" r="18" fill="none" stroke="#E2E8F0" strokeWidth="3" />
+              {/* Animated progress ring */}
+              <circle
+                cx="24" cy="24" r="18"
+                fill="none"
+                stroke="#10B981"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray="113.1"
+                strokeDashoffset="0"
+                className="origin-center -rotate-90"
+                style={{ transformOrigin: 'center' }}
+              />
+            </svg>
+            {/* Green checkmark in center */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <CheckCircle2 className="h-6 w-6 text-emerald-500" strokeWidth={2} />
+            </div>
           </div>
         </div>
-
       </div>
 
-      {/* ─── Middle Section: Bookings by Status & Pending Verifications ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* ─── Row 3: Bookings by Status + Pending Verifications ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Bookings by Status (1/3 Width) */}
-        <div className="bg-white border border-slate-200/70 dark:border-slate-800 dark:bg-slate-900 rounded-3xl p-6 shadow-sm space-y-6">
-          <div className="border-b border-slate-50 pb-5">
-            <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Bookings by Status</h3>
+        {/* Bookings by Status */}
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+          <div className="pb-5 mb-5 border-b border-slate-100">
+            <h3 className="font-bold text-slate-800 text-[15px]">Bookings by Status</h3>
           </div>
           <div className="space-y-4">
-            
-            {/* Status Rows */}
-            {[
-              { label: 'Requested', color: 'bg-amber-500', count: stats.bookingsByStatus.REQUESTED },
-              { label: 'Accepted', color: 'bg-blue-500', count: stats.bookingsByStatus.ACCEPTED },
-              { label: 'Paid', color: 'bg-purple-500', count: stats.bookingsByStatus.PAID },
-              { label: 'In Progress', color: 'bg-green-500', count: stats.bookingsByStatus.IN_PROGRESS },
-              { label: 'Completed', color: 'bg-slate-400', count: stats.bookingsByStatus.COMPLETED },
-              { label: 'Cancelled', color: 'bg-red-500', count: stats.bookingsByStatus.CANCELLED },
-            ].map((status) => (
-              <div key={status.label} className="flex justify-between items-center text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className={`h-2.5 w-2.5 rounded-full ${status.color}`} />
-                  <span className="font-semibold text-slate-600 dark:text-slate-300">{status.label}</span>
+            {statusItems.map((item) => (
+              <div key={item.label} className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <span className={`h-2.5 w-2.5 rounded-full ${item.color} shrink-0`} />
+                  <span className="text-sm font-medium text-slate-600">{item.label}</span>
                 </div>
-                <span className="font-extrabold text-slate-850 dark:text-white">
-                  {getPercentage(status.count)}%
+                <span className="text-sm font-bold text-slate-800">
+                  {getPercentage(item.count)}%
                 </span>
               </div>
             ))}
-
           </div>
         </div>
 
-        {/* Pending Verifications (2/3 Width) */}
-        <div className="lg:col-span-2 bg-white border border-slate-200/70 dark:border-slate-800 dark:bg-slate-900 rounded-3xl p-6 shadow-sm flex flex-col justify-between gap-6">
-          <div className="border-b border-slate-50 pb-5 flex justify-between items-center">
-            <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Pending Verifications</h3>
+        {/* Pending Verifications */}
+        <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm flex flex-col">
+          <div className="pb-5 mb-5 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="font-bold text-slate-800 text-[15px]">Pending Verifications</h3>
             <Link 
               href="/dashboard/admin/technicians" 
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
             >
               View All
             </Link>
           </div>
 
-          <div className="space-y-4 flex-1">
+          <div className="space-y-3 flex-1">
             {pendingTechs.length === 0 ? (
-              <div className="text-center text-xs text-slate-400 py-10">
+              <div className="flex-1 flex items-center justify-center text-sm text-slate-400 py-10">
                 No technicians pending verification.
               </div>
             ) : (
-              <div className="space-y-3.5">
-                {pendingTechs.map((tech) => (
-                  <div 
-                    key={tech.id}
-                    className="border border-slate-100 rounded-2xl px-5 py-4 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0 shadow-inner">
-                        {tech.user?.name ? tech.user.name.charAt(0).toUpperCase() : 'T'}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-850 dark:text-white">{tech.user?.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 capitalize">
-                          {tech.skills[0] || 'Technician'}
-                        </p>
-                      </div>
+              pendingTechs.map((tech) => (
+                <div 
+                  key={tech.id}
+                  className="border border-slate-100 rounded-2xl px-5 py-4 flex items-center justify-between gap-4 hover:border-slate-200 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0">
+                      {tech.initials}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/dashboard/admin/technicians`}
-                        className="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors"
-                      >
-                        Review
-                      </Link>
-                      <button
-                        onClick={() => handleVerifyTechnician(tech.id)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
-                      >
-                        Verify
-                      </button>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{tech.name}</p>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {tech.skill}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/dashboard/admin/technicians"
+                      className="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Review
+                    </Link>
+                    <button
+                      onClick={() => handleVerifyTechnician(tech.id)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
-
       </div>
 
-      {/* ─── Bottom Section: Recent Bookings Table ─── */}
-      <div className="bg-white border border-slate-200/70 dark:border-slate-850 dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm">
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Recent Bookings</h2>
+      {/* ─── Row 4: Recent Bookings Table ─── */}
+      <div className="bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+          <h2 className="font-bold text-slate-800 text-[15px]">Recent Bookings</h2>
           <Link 
             href="/dashboard/admin/bookings"
-            className="text-xs font-bold text-blue-600 hover:text-blue-750 transition-colors"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
           >
             View All
           </Link>
         </div>
 
-        {/* Responsive Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Technician</th>
                 <th className="px-6 py-4">Service</th>
@@ -376,55 +518,36 @@ export default function AdminDashboardPage() {
                 <th className="px-6 py-4">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40 text-xs">
+            <tbody className="divide-y divide-slate-50 text-sm">
               {recentBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-xs text-slate-400">
-                    No bookings found in the system.
+                  <td colSpan={6} className="text-center py-10 text-sm text-slate-400">
+                    No bookings found.
                   </td>
                 </tr>
               ) : (
                 recentBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                    
-                    {/* Customer */}
-                    <td className="px-6 py-4 font-bold text-slate-800 dark:text-white">
+                  <tr key={booking.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-slate-800">
                       {booking.customer?.name}
                     </td>
-
-                    {/* Technician */}
                     <td className="px-6 py-4 text-slate-600 font-medium">
                       {booking.technician?.user?.name || 'Unassigned'}
                     </td>
-
-                    {/* Service */}
-                    <td className="px-6 py-4 text-slate-650 dark:text-slate-350">
+                    <td className="px-6 py-4 text-slate-600">
                       {booking.service?.name}
                     </td>
-
-                    {/* Status Badge */}
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        booking.status === 'REQUESTED' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                        booking.status === 'ACCEPTED' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                        booking.status === 'IN_PROGRESS' ? 'bg-green-50 text-green-700 border-green-100' :
-                        booking.status === 'COMPLETED' ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                        'bg-red-50 text-red-700 border-red-100'
-                      }`}>
-                        {booking.status}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadgeClasses(booking.status)}`}>
+                        {booking.status.replace('_', ' ')}
                       </span>
                     </td>
-
-                    {/* Amount */}
-                    <td className="px-6 py-4 font-black text-slate-800">
+                    <td className="px-6 py-4 font-bold text-slate-800">
                       ৳{booking.totalAmount.toLocaleString()}
                     </td>
-
-                    {/* Date */}
                     <td className="px-6 py-4 text-slate-500 font-medium">
                       {formatFigmaDate(booking.scheduledDate)}
                     </td>
-
                   </tr>
                 ))
               )}
