@@ -164,3 +164,28 @@ export const cancelBooking = async (id: string): Promise<Booking> => {
   const response = await api.patch(`/bookings/${id}/cancel`);
   return response.data.data;
 };
+
+/**
+ * PATCH /bookings/:id/respond
+ * Respond to a pending booking (ACCEPT or DECLINE).
+ */
+export const respondToBooking = async (
+  id: string,
+  action: 'ACCEPT' | 'DECLINE'
+): Promise<Booking> => {
+  const response = await api.patch(`/bookings/${id}/respond`, { action });
+  return response.data.data;
+};
+
+/**
+ * PATCH /bookings/:id/status
+ * Update the status of a booking (IN_PROGRESS or COMPLETED).
+ */
+export const updateBookingStatus = async (
+  id: string,
+  status: 'IN_PROGRESS' | 'COMPLETED'
+): Promise<Booking> => {
+  const response = await api.patch(`/bookings/${id}/status`, { status });
+  return response.data.data;
+};
+
