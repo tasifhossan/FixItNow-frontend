@@ -12,8 +12,6 @@ import {
   User,
   Wrench,
   CreditCard,
-  Database,
-  Palette,
   X,
 } from 'lucide-react';
 import api from '@/lib/api';
@@ -38,163 +36,6 @@ interface BookingRecord {
 
 type StatusPillFilter = 'All' | 'Requested' | 'Accepted' | 'In Progress' | 'Completed' | 'Cancelled';
 
-// ─── Figma Mock Data ─────────────────────────────────────────────────────────
-
-const MOCK_BOOKINGS: BookingRecord[] = [
-  {
-    id: 'bkg-1',
-    displayId: '#BKG-8892',
-    customerName: 'Rafiq Ahmed',
-    customerInitials: 'RA',
-    technicianName: 'Jamal Uddin',
-    technicianInitials: 'JU',
-    serviceName: 'AC Repair & Maintenance',
-    amount: 2500,
-    scheduledDate: 'Oct 24, 2023',
-    status: 'Completed',
-    customerPhone: '+880 1712-345678',
-    technicianPhone: '+880 1819-987654',
-    paymentMethod: 'SSLCommerz (Online)',
-  },
-  {
-    id: 'bkg-2',
-    displayId: '#BKG-8893',
-    customerName: 'Sadia Akter',
-    customerInitials: 'SA',
-    technicianName: 'Kamrul Hasan',
-    technicianInitials: 'KH',
-    serviceName: 'Plumbing Leak Fix',
-    amount: 850,
-    scheduledDate: 'Oct 24, 2023',
-    status: 'In Progress',
-    customerPhone: '+880 1515-112233',
-    technicianPhone: '+880 1912-334455',
-    paymentMethod: 'Cash on Service',
-  },
-  {
-    id: 'bkg-3',
-    displayId: '#BKG-8894',
-    customerName: 'Farhana Yeasmin',
-    customerInitials: 'FY',
-    technicianName: 'Robiul Islam',
-    technicianInitials: 'RI',
-    serviceName: 'Fridge Repair',
-    amount: 1800,
-    scheduledDate: 'Oct 23, 2023',
-    status: 'Requested',
-    customerPhone: '+880 1616-998877',
-    technicianPhone: '+880 1711-223344',
-    paymentMethod: 'SSLCommerz (Online)',
-  },
-  {
-    id: 'bkg-4',
-    displayId: '#BKG-8895',
-    customerName: 'Anisur Rahman',
-    customerInitials: 'AR',
-    technicianName: 'Abidur Rahman',
-    technicianInitials: 'AR',
-    serviceName: 'House Wiring Fix',
-    amount: 3200,
-    scheduledDate: 'Oct 22, 2023',
-    status: 'Completed',
-    customerPhone: '+880 1818-445566',
-    technicianPhone: '+880 1313-778899',
-    paymentMethod: 'SSLCommerz (Online)',
-  },
-  {
-    id: 'bkg-5',
-    displayId: '#BKG-8896',
-    customerName: 'Nusrat Jahan',
-    customerInitials: 'NJ',
-    technicianName: 'Sabbir Ahmed',
-    technicianInitials: 'SA',
-    serviceName: 'Commode Fitting',
-    amount: 1200,
-    scheduledDate: 'Oct 21, 2023',
-    status: 'Accepted',
-    customerPhone: '+880 1919-667788',
-    technicianPhone: '+880 1616-223344',
-    paymentMethod: 'Cash on Service',
-  },
-  {
-    id: 'bkg-6',
-    displayId: '#BKG-8897',
-    customerName: 'Imtiaz Ahmed',
-    customerInitials: 'IA',
-    technicianName: 'Jamal Uddin',
-    technicianInitials: 'JU',
-    serviceName: 'AC Water Leakage Fix',
-    amount: 1500,
-    scheduledDate: 'Oct 20, 2023',
-    status: 'Cancelled',
-    customerPhone: '+880 1717-556677',
-    technicianPhone: '+880 1819-987654',
-    paymentMethod: 'Refunded (SSLCommerz)',
-  },
-  {
-    id: 'bkg-7',
-    displayId: '#BKG-8898',
-    customerName: 'Sabrina Khan',
-    customerInitials: 'SK',
-    technicianName: 'Kamrul Hasan',
-    technicianInitials: 'KH',
-    serviceName: 'Basin Pipe Replacement',
-    amount: 600,
-    scheduledDate: 'Oct 19, 2023',
-    status: 'Completed',
-    customerPhone: '+880 1515-443322',
-    technicianPhone: '+880 1912-334455',
-    paymentMethod: 'Cash on Service',
-  },
-  {
-    id: 'bkg-8',
-    displayId: '#BKG-8899',
-    customerName: 'Tanvir Hasan',
-    customerInitials: 'TH',
-    technicianName: 'Robiul Islam',
-    technicianInitials: 'RI',
-    serviceName: 'Washing Machine Repair',
-    amount: 2000,
-    scheduledDate: 'Oct 18, 2023',
-    status: 'Requested',
-    customerPhone: '+880 1313-112233',
-    technicianPhone: '+880 1711-223344',
-    paymentMethod: 'SSLCommerz (Online)',
-  },
-  {
-    id: 'bkg-9',
-    displayId: '#BKG-8900',
-    customerName: 'Jannatul Ferdous',
-    customerInitials: 'JF',
-    technicianName: 'Abidur Rahman',
-    technicianInitials: 'AR',
-    serviceName: 'Light & Board Install',
-    amount: 900,
-    scheduledDate: 'Oct 17, 2023',
-    status: 'Completed',
-    customerPhone: '+880 1616-554433',
-    technicianPhone: '+880 1313-778899',
-    paymentMethod: 'Cash on Service',
-  },
-  {
-    id: 'bkg-10',
-    displayId: '#BKG-8901',
-    customerName: 'Kazi Arif',
-    customerInitials: 'KA',
-    technicianName: 'Sabbir Ahmed',
-    technicianInitials: 'SA',
-    serviceName: 'Kitchen Sink Unclogging',
-    amount: 800,
-    scheduledDate: 'Oct 16, 2023',
-    status: 'Completed',
-    customerPhone: '+880 1818-223344',
-    technicianPhone: '+880 1616-223344',
-    paymentMethod: 'Cash on Service',
-  },
-];
-
-const TOTAL_ENTRIES = 256;
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getStatusBadgeStyle(status: string) {
@@ -217,7 +58,6 @@ function getStatusBadgeStyle(status: string) {
 // ─── Main Page Component ─────────────────────────────────────────────────────
 
 export default function AdminBookingsOversightPage() {
-  const [useMockData, setUseMockData] = useState(true);
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -232,15 +72,10 @@ export default function AdminBookingsOversightPage() {
 
   // Load Bookings Data
   useEffect(() => {
-    if (useMockData) {
-      setBookings(MOCK_BOOKINGS);
-      setTotalRecords(TOTAL_ENTRIES);
-    } else {
-      fetchLiveData();
-    }
-  }, [useMockData, currentPage]);
+    loadBookingsData();
+  }, [currentPage]);
 
-  const fetchLiveData = async () => {
+  const loadBookingsData = async () => {
     setIsLoading(true);
     try {
       const res = await api.get('/admin/bookings', {
@@ -289,10 +124,96 @@ export default function AdminBookingsOversightPage() {
     }
   };
 
-  // Searching & Filtering (mock mode client side)
-  const filteredBookings = useMemo(() => {
-    if (!useMockData) return bookings; // API handles it in live mode ideally, but we display current fetched array
+  const handleExportCSV = () => {
+    if (bookings.length === 0) return;
+    const headers = ['Booking ID', 'Customer Name', 'Customer Phone', 'Technician Name', 'Technician Phone', 'Service Name', 'Amount (BDT)', 'Scheduled Date', 'Status', 'Payment Method'];
+    const rows = bookings.map(b => [
+      b.displayId,
+      b.customerName,
+      b.customerPhone || '',
+      b.technicianName,
+      b.technicianPhone || '',
+      b.serviceName,
+      b.amount,
+      b.scheduledDate,
+      b.status,
+      b.paymentMethod || ''
+    ]);
 
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    const html = `
+      <html>
+        <head>
+          <title>Bookings Oversight Log - Export</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #334155; }
+            h1 { font-size: 20px; margin-bottom: 5px; color: #1e293b; }
+            p { font-size: 12px; margin-bottom: 20px; color: #64748b; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 11px; }
+            th { background-color: #f8fafc; font-weight: bold; color: #475569; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+          </style>
+        </head>
+        <body>
+          <h1>Bookings Oversight Log</h1>
+          <p>Generated on ${new Date().toLocaleDateString()} - Total Records: ${bookings.length}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Customer</th>
+                <th>Technician</th>
+                <th>Service</th>
+                <th>Amount (BDT)</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookings.map(b => `
+                <tr>
+                  <td><b>${b.displayId}</b></td>
+                  <td>${b.customerName}</td>
+                  <td>${b.technicianName}</td>
+                  <td>${b.serviceName}</td>
+                  <td>৳${b.amount.toLocaleString()}</td>
+                  <td>${b.scheduledDate}</td>
+                  <td>${b.status}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  // Searching & Filtering
+  const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
       // Search Match
       if (searchQuery) {
@@ -312,28 +233,25 @@ export default function AdminBookingsOversightPage() {
 
       return true;
     });
-  }, [bookings, searchQuery, statusFilter, useMockData]);
+  }, [bookings, searchQuery, statusFilter]);
 
   const totalPages = useMemo(() => {
-    const total = useMockData ? filteredBookings.length : totalRecords;
-    return Math.max(1, Math.ceil(total / limitPerPage));
-  }, [filteredBookings, totalRecords, useMockData]);
+    return Math.max(1, Math.ceil(totalRecords / limitPerPage));
+  }, [totalRecords]);
 
   const displayedBookings = useMemo(() => {
-    if (!useMockData) return bookings; // API already paginated it
-    const startIdx = (currentPage - 1) * limitPerPage;
-    return filteredBookings.slice(startIdx, startIdx + limitPerPage);
-  }, [filteredBookings, currentPage, useMockData, bookings]);
+    return filteredBookings;
+  }, [filteredBookings]);
 
   // Pagination texts
   const showingFrom = (currentPage - 1) * limitPerPage + 1;
-  const showingTo = Math.min(currentPage * limitPerPage, useMockData ? filteredBookings.length : totalRecords);
-  const totalToShow = useMockData ? filteredBookings.length : totalRecords;
+  const showingTo = Math.min(currentPage * limitPerPage, totalRecords);
+  const totalToShow = totalRecords;
 
   return (
     <div className="space-y-6 text-left">
       
-      {/* ─── Page Title & Header Toggler ─── */}
+      {/* ─── Page Title & Header ─── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Bookings Oversight</h1>
@@ -342,31 +260,22 @@ export default function AdminBookingsOversightPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Mock/Live Toggle */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm shrink-0">
-            <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
-            <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>Mock</span>
-            <button
-              onClick={() => { setUseMockData(!useMockData); setCurrentPage(1); }}
-              className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${
-                useMockData ? 'bg-blue-600' : 'bg-emerald-50'
-              }`}
-            >
-              <span
-                className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                  useMockData ? 'left-[3px]' : 'left-[21px]'
-                }`}
-              />
-            </button>
-            <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
-            <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>Live</span>
-          </div>
-
+        <div className="flex items-center gap-2">
           {/* Export CSV button */}
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-650 font-bold rounded-xl text-xs transition-colors shadow-sm">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs transition-colors shadow-sm"
+          >
             <Download className="h-3.5 w-3.5 text-slate-400" />
             Export CSV
+          </button>
+          {/* Export PDF button */}
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-650 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
+          >
+            <Download className="h-3.5 w-3.5 text-white/80" />
+            Export PDF
           </button>
         </div>
       </div>
