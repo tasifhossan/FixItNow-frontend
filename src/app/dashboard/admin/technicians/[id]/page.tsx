@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
   Mail,
@@ -17,63 +18,33 @@ import {
   Wrench,
   Truck,
   Gauge,
+  Info,
 } from 'lucide-react';
+import api from '@/lib/api';
 
-// ─── Mock Data Matching Figma ────────────────────────────────────────────────
+// ─── Interfaces ──────────────────────────────────────────────────────────────
 
-const MOCK_APPLICATION = {
-  id: 'mock-tech-1',
-  displayId: '#APP-8492',
-  submittedDate: 'Oct 24, 2023',
-  status: 'Pending Verification' as const,
-  technician: {
-    name: 'Marcus Johnson',
-    title: 'Master Electrician',
-    experience: '8 Years Experience',
-    email: 'marcus.j@example.com',
-    phone: '(555) 123-4567',
-    location: 'Seattle, WA Area',
-    bio: 'Licensed electrician specializing in residential troubleshooting and smart home integrations. Committed to safety codes and clear communication with clients.',
-    skills: ['Electrical Repair', 'Wiring Installation', 'Smart Home Setup'],
-    avatarInitials: 'MJ',
-  },
-  documents: [
-    {
-      id: 'doc-1',
-      title: 'Government ID Proof',
-      filename: 'driver_license_front.jpg (2.4 MB)',
-      icon: 'id' as const,
-      iconBg: 'bg-blue-100 text-blue-600',
-      verified: false,
-    },
-    {
-      id: 'doc-2',
-      title: 'Professional License',
-      filename: 'wa_state_electrician_license.pdf (1.1 MB)',
-      icon: 'license' as const,
-      iconBg: 'bg-amber-100 text-amber-600',
-      verified: false,
-    },
-    {
-      id: 'doc-3',
-      title: 'Background Check Authorization',
-      filename: 'Signed via DocuSign',
-      icon: 'background' as const,
-      iconBg: 'bg-emerald-100 text-emerald-600',
-      verified: true,
-    },
-  ],
-  equipment: [
-    { label: 'Complete Electrical Toolkit', icon: 'wrench' },
-    { label: 'Work Van (Insured)', icon: 'truck' },
-    { label: 'Multimeter & Testing Gear', icon: 'gauge' },
-  ],
-};
+interface TechnicianDetails {
+  id: string;
+  name: string;
+  title: string;
+  experience: string;
+  email: string;
+  phone: string;
+  location: string;
+  bio: string;
+  skills: string[];
+  avatarInitials: string;
+  isVerified: boolean;
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TechnicianReviewPage() {
-  const app = MOCK_APPLICATION;
+  const { id } = useParams();
+  const [tech, setTech] = useState<TechnicianDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [checks, setChecks] = useState({
     identityVerified: true,
@@ -83,16 +54,68 @@ export default function TechnicianReviewPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [actionTaken, setActionTaken] = useState<'approved' | 'rejected' | null>(null);
 
+  const fetchTechnician = async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await api.get(`/technicians/${id}`);
+      const t = res.data.data;
+      const u = t.user || {};
+      
+      setTech({
+        id: t.id,
+        name: u.name || 'Unknown',
+        title: t.skills?.[0] || 'Technician',
+        experience: '5+ Years Experience',
+        email: u.email || '',
+        phone: u.phone || 'Not provided',
+        location: 'Seattle, WA Area',
+        bio: t.bio || 'No bio provided.',
+        skills: t.skills || [],
+        avatarInitials: (u.name || 'T').split(' ').map((n: string) => n.charAt(0)).join('').toUpperCase().slice(0, 2),
+        isVerified: t.isVerified,
+      });
+      if (t.isVerified) {
+        setActionTaken('approved');
+      }
+    } catch (err) {
+      console.error('Failed to load technician:', err);
+      setErrorMsg('Failed to load technician details.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) fetchTechnician();
+  }, [id]);
+
   const handleCheckChange = (key: keyof typeof checks) => {
     setChecks(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleApprove = () => {
-    setActionTaken('approved');
+  const handleApprove = async () => {
+    setErrorMsg(null);
+    try {
+      await api.patch(`/technicians/${id}/verify`);
+      setActionTaken('approved');
+    } catch (err: any) {
+      console.error('Failed to verify:', err);
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to approve application.');
+    }
   };
 
-  const handleReject = () => {
-    setActionTaken('rejected');
+  const handleReject = async () => {
+    setErrorMsg(null);
+    try {
+      // Blocking user or similar to reject application
+      if (tech) {
+        setActionTaken('rejected');
+      }
+    } catch (err) {
+      console.error('Failed to reject:', err);
+      setErrorMsg('Failed to reject application.');
+    }
   };
 
   const getDocIcon = (icon: string) => {
@@ -113,6 +136,55 @@ export default function TechnicianReviewPage() {
     }
   };
 
+  if (isLoading) {
+    return <div className="p-8 text-center text-sm text-slate-400">Loading review profile...</div>;
+  }
+
+  if (errorMsg && !tech) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-100 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
+        <Info className="h-4 w-4 shrink-0 text-red-500" />
+        <span>{errorMsg}</span>
+      </div>
+    );
+  }
+
+  if (!tech) return null;
+
+  // Fake docs/equipment mapped dynamically
+  const documents = [
+    {
+      id: 'doc-1',
+      title: 'Government ID Proof',
+      filename: `${tech.name.toLowerCase().replace(' ', '_')}_id.jpg (2.4 MB)`,
+      icon: 'id' as const,
+      iconBg: 'bg-blue-100 text-blue-600',
+      verified: false,
+    },
+    {
+      id: 'doc-2',
+      title: 'Professional License',
+      filename: `${tech.name.toLowerCase().replace(' ', '_')}_license.pdf (1.1 MB)`,
+      icon: 'license' as const,
+      iconBg: 'bg-amber-100 text-amber-600',
+      verified: false,
+    },
+    {
+      id: 'doc-3',
+      title: 'Background Check Authorization',
+      filename: 'Signed via DocuSign',
+      icon: 'background' as const,
+      iconBg: 'bg-emerald-100 text-emerald-600',
+      verified: true,
+    },
+  ];
+
+  const equipment = [
+    { label: 'Complete Toolkit', icon: 'wrench' },
+    { label: 'Work Van (Insured)', icon: 'truck' },
+    { label: 'Multimeter & Testing Gear', icon: 'gauge' },
+  ];
+
   return (
     <div className="space-y-6 text-left">
 
@@ -129,10 +201,10 @@ export default function TechnicianReviewPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-            Application Review: {app.technician.name}
+            Application Review: {tech.name}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Submitted on {app.submittedDate} • ID: {app.displayId}
+            ID: #APP-{tech.id.substring(0, 4).toUpperCase()}
           </p>
         </div>
         {actionTaken === 'approved' ? (
@@ -148,7 +220,7 @@ export default function TechnicianReviewPage() {
         ) : (
           <span className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-sm font-semibold">
             <Clock className="h-4 w-4" />
-            {app.status}
+            Pending Verification
           </span>
         )}
       </div>
@@ -164,15 +236,15 @@ export default function TechnicianReviewPage() {
             {/* Top: Avatar + Info */}
             <div className="flex items-start gap-4 pb-5 border-b border-slate-100">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md">
-                {app.technician.avatarInitials}
+                {tech.avatarInitials}
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-800">{app.technician.name}</h2>
+                <h2 className="text-lg font-bold text-slate-800">{tech.name}</h2>
                 <p className="text-sm text-slate-500 font-medium">
-                  {app.technician.title} • {app.technician.experience}
+                  {tech.title} • {tech.experience}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {app.technician.skills.map((skill) => (
+                  {tech.skills.map((skill) => (
                     <span
                       key={skill}
                       className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg border border-blue-100"
@@ -192,15 +264,15 @@ export default function TechnicianReviewPage() {
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2.5 text-sm text-slate-600">
                     <Mail className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium">{app.technician.email}</span>
+                    <span className="font-medium">{tech.email}</span>
                   </div>
                   <div className="flex items-center gap-2.5 text-sm text-slate-600">
                     <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium">{app.technician.phone}</span>
+                    <span className="font-medium">{tech.phone}</span>
                   </div>
                   <div className="flex items-center gap-2.5 text-sm text-slate-600">
                     <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium">{app.technician.location}</span>
+                    <span className="font-medium">{tech.location}</span>
                   </div>
                 </div>
               </div>
@@ -208,7 +280,7 @@ export default function TechnicianReviewPage() {
               {/* Bio */}
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Bio / Summary</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{app.technician.bio}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">{tech.bio}</p>
               </div>
             </div>
           </div>
@@ -221,7 +293,7 @@ export default function TechnicianReviewPage() {
             </div>
 
             <div className="space-y-3">
-              {app.documents.map((doc) => (
+              {documents.map((doc) => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition-colors"
@@ -256,7 +328,7 @@ export default function TechnicianReviewPage() {
               Declared Equipment
             </h3>
             <div className="flex flex-wrap gap-3">
-              {app.equipment.map((eq) => (
+              {equipment.map((eq) => (
                 <div
                   key={eq.label}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-medium text-slate-700 hover:border-slate-300 transition-colors"

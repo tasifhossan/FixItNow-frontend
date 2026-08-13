@@ -10,9 +10,7 @@ import {
   Briefcase, 
   CheckCircle2, 
   Info,
-  Layers,
-  Database,
-  Palette
+  Layers
 } from 'lucide-react';
 import api from '@/lib/api';
 import { Technician } from '@/lib/technicians';
@@ -56,63 +54,6 @@ interface PendingTech {
   skill: string;
   isVerified: boolean;
 }
-
-// ─── Figma Mock Data ─────────────────────────────────────────────────────────
-
-const MOCK_STATS: AdminStats = {
-  totalUsers: 12450,
-  totalCustomers: 11600,
-  totalTechnicians: 850,
-  totalBookings: 200,
-  bookingsByStatus: {
-    REQUESTED: 30,
-    ACCEPTED: 40,
-    DECLINED: 0,
-    PAID: 20,
-    IN_PROGRESS: 50,
-    COMPLETED: 50,
-    CANCELLED: 10,
-  },
-  totalRevenue: 2400000,
-  totalVerifiedTechnicians: 620,
-  totalCategories: 12,
-  totalServices: 48,
-};
-
-const MOCK_PENDING_TECHS: PendingTech[] = [
-  { id: 'mock-pt-1', name: 'Abidur Rahman', initials: 'AR', skill: 'Electrician', isVerified: false },
-  { id: 'mock-pt-2', name: 'Sabbir Ahmed', initials: 'SA', skill: 'Plumber', isVerified: false },
-];
-
-const MOCK_RECENT_BOOKINGS: RecentBooking[] = [
-  {
-    id: 'mock-b-1',
-    customer: { name: 'John Doe' },
-    technician: { user: { name: 'Abidur Rahman' } },
-    service: { name: 'AC Repair' },
-    status: 'IN_PROGRESS',
-    totalAmount: 1500,
-    scheduledDate: '2023-10-24',
-  },
-  {
-    id: 'mock-b-2',
-    customer: { name: 'Jane Smith' },
-    technician: { user: { name: 'Sabbir Ahmed' } },
-    service: { name: 'Pipe Leak Fix' },
-    status: 'REQUESTED',
-    totalAmount: 800,
-    scheduledDate: '2023-10-24',
-  },
-  {
-    id: 'mock-b-3',
-    customer: { name: 'Karim Ali' },
-    technician: { user: { name: 'Robiul Islam' } },
-    service: { name: 'Fridge Repair' },
-    status: 'COMPLETED',
-    totalAmount: 2200,
-    scheduledDate: '2023-10-23',
-  },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -171,26 +112,14 @@ function DashboardSkeleton() {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function AdminDashboardPage() {
-  const [useMockData, setUseMockData] = useState(true);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
   const [pendingTechs, setPendingTechs] = useState<PendingTech[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [verifiedIds, setVerifiedIds] = useState<Set<string>>(new Set());
-  const [mockVerifiedCount, setMockVerifiedCount] = useState(MOCK_STATS.totalVerifiedTechnicians);
-
-  // Load mock data
-  const loadMockData = useCallback(() => {
-    setStats({ ...MOCK_STATS, totalVerifiedTechnicians: mockVerifiedCount });
-    setRecentBookings(MOCK_RECENT_BOOKINGS);
-    setPendingTechs(MOCK_PENDING_TECHS.filter(t => !verifiedIds.has(t.id)));
-    setIsLoading(false);
-    setErrorMsg(null);
-  }, [mockVerifiedCount, verifiedIds]);
 
   // Load live API data
-  const loadLiveData = useCallback(async () => {
+  const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
@@ -221,27 +150,18 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (useMockData) {
-      loadMockData();
-    } else {
-      loadLiveData();
-    }
-  }, [useMockData, loadMockData, loadLiveData]);
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   // Handle verify for mock mode
   const handleVerifyTechnician = async (techId: string) => {
     setErrorMsg(null);
-    if (useMockData) {
-      setVerifiedIds(prev => new Set(prev).add(techId));
-      setMockVerifiedCount(prev => prev + 1);
-    } else {
-      try {
-        await api.patch(`/technicians/${techId}/verify`);
-        await loadLiveData();
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } }; message?: string };
-        setErrorMsg(e.response?.data?.message || e.message || 'Failed to verify technician.');
-      }
+    try {
+      await api.patch(`/technicians/${techId}/verify`);
+      await loadDashboardData();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      setErrorMsg(e.response?.data?.message || e.message || 'Failed to verify technician.');
     }
   };
 
@@ -264,32 +184,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 text-left">
-
-      {/* ─── Data Source Toggle ─── */}
-      <div className="flex items-center justify-end">
-        <div className="flex items-center gap-2 bg-white border border-slate-200/80 rounded-xl px-3 py-2 shadow-sm">
-          <Palette className={`h-3.5 w-3.5 transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${useMockData ? 'text-blue-600' : 'text-slate-400'}`}>
-            Mock
-          </span>
-          <button
-            onClick={() => setUseMockData(!useMockData)}
-            className={`relative w-10 h-[22px] rounded-full transition-colors duration-300 ${
-              useMockData ? 'bg-blue-600' : 'bg-emerald-500'
-            }`}
-          >
-            <span
-              className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                useMockData ? 'left-[3px]' : 'left-[21px]'
-              }`}
-            />
-          </button>
-          <Database className={`h-3.5 w-3.5 transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`} />
-          <span className={`text-[11px] font-semibold transition-colors ${!useMockData ? 'text-emerald-600' : 'text-slate-400'}`}>
-            Live
-          </span>
-        </div>
-      </div>
 
       {errorMsg && (
         <div className="p-4 bg-red-50 border border-red-100 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
