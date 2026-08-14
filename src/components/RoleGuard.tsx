@@ -9,21 +9,16 @@ interface RoleGuardProps {
   children: React.ReactNode;
 }
 
-export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
+export const RoleGuard: React.FC<RoleGuardProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        // Redirection to login if not authenticated
-        router.replace('/auth/login');
-      } else if (!allowedRoles.includes(user.role)) {
-        // Redirection to root home if authenticated but unauthorized
-        router.replace('/');
-      }
+    if (!isLoading && !user) {
+      // Redirection to login if not authenticated
+      router.replace('/auth/login');
     }
-  }, [user, isLoading, allowedRoles, router]);
+  }, [user, isLoading, router]);
 
   // Spinner design matching the layout loading state
   if (isLoading) {
@@ -42,18 +37,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
     );
   }
 
-  // Brief redirection block
-  if (!user || !allowedRoles.includes(user.role)) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center min-h-[60vh] px-4 bg-slate-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-650 border-t-transparent" />
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            Unauthorized. Redirecting...
-          </p>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
   // Renders the dashboard shell content when authenticated

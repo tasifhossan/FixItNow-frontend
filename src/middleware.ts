@@ -1,35 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
   if (!refreshToken) {
     const loginUrl = new URL('/auth/login', request.url);
-    // Optional query param: preserve destination if login page adds support later
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Base64Url-decode the JWT payload to inspect the role
   try {
-    const parts = refreshToken.split('.');
-    if (parts.length !== 3) {
+    const secretStr = process.env.JWT_REFRESH_SECRET;
+    if (!secretStr) {
+      console.error('JWT_REFRESH_SECRET is not configured on the frontend');
       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
+    const secret = new TextEncoder().encode(secretStr);
+    const { payload } = await jwtVerify(refreshToken, secret);
 
-    const payload = JSON.parse(jsonPayload);
-    const role = payload?.role;
+    const role = payload?.role as string;
 
     if (!role) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
@@ -48,7 +41,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(getDashboardRoute(role), request.url));
     }
   } catch (error) {
-    console.error('Failed to parse auth token inside middleware:', error);
+    console.error('Cryptographic verification failed for auth token inside middleware:', error);
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
