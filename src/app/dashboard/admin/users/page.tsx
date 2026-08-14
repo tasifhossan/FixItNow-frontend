@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Users,
   UserPlus,
@@ -200,11 +200,19 @@ export default function AdminUsersPage() {
     loadUsersData();
   }, [loadUsersData]);
 
+  const displayedUsers = useMemo(() => {
+    if (statusFilter === 'All') return users;
+    return users.filter(user => {
+      if (statusFilter === 'Active') return !user.isBlocked;
+      if (statusFilter === 'Blocked') return user.isBlocked;
+      return true;
+    });
+  }, [users, statusFilter]);
+
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
-  const displayedUsers = users;
   const totalDisplay = totalEntries.toLocaleString();
-  const showingFrom = totalEntries > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const showingTo = Math.min(currentPage * itemsPerPage, totalEntries);
+  const showingFrom = displayedUsers.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const showingTo = Math.min(currentPage * itemsPerPage, displayedUsers.length);
 
   const handleToggleBlock = async (userId: string) => {
     try {

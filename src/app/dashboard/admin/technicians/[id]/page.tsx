@@ -457,8 +457,9 @@ export default function TechnicianReviewPage() {
                     Approve Application
                   </button>
                   <button
-                    onClick={handleReject}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-semibold transition-colors"
+                    disabled
+                    title="Rejection not yet supported"
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-slate-55 text-slate-400 border border-slate-200 rounded-xl text-sm font-semibold cursor-not-allowed opacity-60"
                   >
                     <XCircle className="h-4.5 w-4.5" />
                     Reject Application
