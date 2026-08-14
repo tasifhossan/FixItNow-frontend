@@ -14,7 +14,3 @@ export const getCategories = async (): Promise<Category[]> => {
   return response.data.data;
 };
 
-export const getCategoryById = async (id: string): Promise<Category> => {
-  const response = await api.get(`/categories/${id}`);
-  return response.data.data;
-};

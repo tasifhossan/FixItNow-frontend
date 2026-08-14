@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Users,
-  UserPlus,
-  Flag,
   Search,
   Download,
   Plus,
@@ -262,32 +260,6 @@ export default function AdminUsersPage() {
             <p className="text-xs text-slate-400 font-medium">Total Users</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-tight">
               {totalDisplay}
-            </p>
-          </div>
-        </div>
-
-        {/* New Registrations */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-2xl">
-            <UserPlus className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 font-medium">New Registrations</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">
-              +12 <span className="text-xs font-semibold text-emerald-500 ml-1.5">this week</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Flagged Accounts */}
-        <div className="bg-white border border-slate-200/60 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="p-3 bg-red-100 text-red-500 rounded-2xl">
-            <Flag className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 font-medium">Flagged Accounts</p>
-            <p className="text-2xl font-extrabold text-slate-800 leading-tight">
-              3
             </p>
           </div>
         </div>

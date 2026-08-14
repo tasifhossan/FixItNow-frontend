@@ -103,8 +103,7 @@ export default function BookingModal({
       toast.success('Booking request sent!');
       reset();
       onClose();
-      // TODO: redirect to /dashboard/customer/bookings once Phase 4 creates that route
-      router.push('/dashboard/customer');
+      router.push('/dashboard/customer/bookings');
     } catch (error: unknown) {
       // Match the error-extraction pattern from the auth pages (register/login)
       const err = error as { response?: { data?: { message?: string } }; message?: string };

@@ -106,18 +106,6 @@ export default function TechnicianReviewPage() {
     }
   };
 
-  const handleReject = async () => {
-    setErrorMsg(null);
-    try {
-      // Blocking user or similar to reject application
-      if (tech) {
-        setActionTaken('rejected');
-      }
-    } catch (err) {
-      console.error('Failed to reject:', err);
-      setErrorMsg('Failed to reject application.');
-    }
-  };
 
   const getDocIcon = (icon: string) => {
     switch (icon) {
