@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -13,7 +13,6 @@ import {
   Scissors,
   Hammer,
   Car,
-  ShieldAlert,
   CheckCircle,
   X,
 } from 'lucide-react';
@@ -49,12 +48,30 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 
 // ─── Main Page Component ─────────────────────────────────────────────────────
 
+interface BackendCategory {
+  id: string;
+  name: string;
+  description?: string | null;
+  _count?: {
+    services: number;
+  };
+}
+
+interface BackendService {
+  id: string;
+  categoryId: string;
+  name: string;
+  description?: string | null;
+  basePrice: number;
+  price?: number;
+  isActive?: boolean;
+}
+
 export default function AdminCategoriesServicesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<ServiceOffer[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modal States
@@ -72,18 +89,12 @@ export default function AdminCategoriesServicesPage() {
 
   const [editingService, setEditingService] = useState<ServiceOffer | null>(null);
 
-  // Initial Load
-  useEffect(() => {
-    loadServicesData();
-  }, []);
-
-  const loadServicesData = async () => {
-    setIsLoading(true);
+  const loadServicesData = useCallback(async () => {
     try {
       const categoriesRes = await api.get('/categories');
       const apiCategories = categoriesRes.data.data || [];
       
-      const formattedCategories: Category[] = apiCategories.map((c: any, index: number) => ({
+      const formattedCategories: Category[] = apiCategories.map((c: BackendCategory, index: number) => ({
         id: c.id,
         name: c.name,
         servicesCount: c._count?.services || 0,
@@ -98,7 +109,7 @@ export default function AdminCategoriesServicesPage() {
 
       const servicesRes = await api.get('/services');
       const apiServices = servicesRes.data.data?.data || servicesRes.data.data || [];
-      const formattedServices: ServiceOffer[] = apiServices.map((s: any) => ({
+      const formattedServices: ServiceOffer[] = apiServices.map((s: BackendService) => ({
         id: s.id,
         categoryId: s.categoryId,
         name: s.name,
@@ -110,10 +121,13 @@ export default function AdminCategoriesServicesPage() {
     } catch (err) {
       console.error('Failed to fetch categories or services:', err);
       showToast('Failed to load data from backend api.');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [selectedCategoryId]);
+
+  // Initial Load
+  useEffect(() => {
+    loadServicesData();
+  }, [loadServicesData]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -437,7 +451,7 @@ export default function AdminCategoriesServicesPage() {
                     {activeServices.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="text-center py-12 text-slate-400 text-xs font-medium">
-                          No services available in this category. Click "Add Service" to create one.
+                          No services available in this category. Click &quot;Add Service&quot; to create one.
                         </td>
                       </tr>
                     ) : (

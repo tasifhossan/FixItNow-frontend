@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -54,7 +54,7 @@ export default function TechnicianReviewPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [actionTaken, setActionTaken] = useState<'approved' | 'rejected' | null>(null);
 
-  const fetchTechnician = async () => {
+  const fetchTechnician = useCallback(async () => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
@@ -84,11 +84,11 @@ export default function TechnicianReviewPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) fetchTechnician();
-  }, [id]);
+  }, [id, fetchTechnician]);
 
   const handleCheckChange = (key: keyof typeof checks) => {
     setChecks(prev => ({ ...prev, [key]: !prev[key] }));
@@ -99,8 +99,9 @@ export default function TechnicianReviewPage() {
     try {
       await api.patch(`/technicians/${id}/verify`);
       setActionTaken('approved');
-    } catch (err: any) {
-      console.error('Failed to verify:', err);
+    } catch (error: unknown) {
+      console.error('Failed to verify:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       setErrorMsg(err.response?.data?.message || err.message || 'Failed to approve application.');
     }
   };

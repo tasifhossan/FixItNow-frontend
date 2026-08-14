@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search,
   Download,
@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Eye,
   Calendar,
-  Clock,
   User,
   Wrench,
   CreditCard,
@@ -32,6 +31,30 @@ interface BookingRecord {
   customerPhone?: string;
   technicianPhone?: string;
   paymentMethod?: string;
+}
+
+interface BackendBookingUser {
+  name: string;
+  phone?: string | null;
+}
+
+interface BackendBookingTechnician {
+  user: BackendBookingUser;
+}
+
+interface BackendBooking {
+  id: string;
+  customer?: BackendBookingUser | null;
+  technician?: BackendBookingTechnician | null;
+  service?: {
+    name: string;
+  } | null;
+  totalAmount: number;
+  scheduledDate: string;
+  status: string;
+  payment?: {
+    method?: string | null;
+  } | null;
 }
 
 type StatusPillFilter = 'All' | 'Requested' | 'Accepted' | 'In Progress' | 'Completed' | 'Cancelled';
@@ -70,12 +93,7 @@ export default function AdminBookingsOversightPage() {
 
   const limitPerPage = 10;
 
-  // Load Bookings Data
-  useEffect(() => {
-    loadBookingsData();
-  }, [currentPage]);
-
-  const loadBookingsData = async () => {
+  const loadBookingsData = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await api.get('/admin/bookings', {
@@ -87,7 +105,7 @@ export default function AdminBookingsOversightPage() {
       const rawData = res.data.data.data || [];
       const total = res.data.data.meta?.total || rawData.length;
 
-      const formatted: BookingRecord[] = rawData.map((b: any) => {
+      const formatted: BookingRecord[] = rawData.map((b: BackendBooking) => {
         const statusMap: Record<string, string> = {
           REQUESTED: 'Requested',
           ACCEPTED: 'Accepted',
@@ -122,7 +140,12 @@ export default function AdminBookingsOversightPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, limitPerPage]);
+
+  // Load Bookings Data
+  useEffect(() => {
+    loadBookingsData();
+  }, [loadBookingsData]);
 
   const handleExportCSV = () => {
     if (bookings.length === 0) return;
