@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { toast } from 'react-hot-toast';
 import { X, Calendar, MapPin, Wrench, FileText } from 'lucide-react';
 import { createBooking } from '../lib/bookings';
+import { getAvailableSlots } from '../lib/technicians';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface BookingModalProps {
@@ -58,10 +59,16 @@ export default function BookingModal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -73,15 +80,50 @@ export default function BookingModal({
     },
   });
 
+  const handleClose = useCallback(() => {
+    reset();
+    setSelectedDate('');
+    setAvailableSlots([]);
+    setSelectedSlot('');
+    onClose();
+  }, [reset, onClose]);
+
+  const fetchSlots = async (dateStr: string) => {
+    if (!dateStr) {
+      setAvailableSlots([]);
+      return;
+    }
+    setIsLoadingSlots(true);
+    try {
+      const slots = await getAvailableSlots(technicianId, dateStr);
+      setAvailableSlots(slots);
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error('Failed to load available slots');
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
+
+  // Reset states on open/close
+  useEffect(() => {
+    if (isOpen) {
+      reset();
+      setSelectedDate('');
+      setAvailableSlots([]);
+      setSelectedSlot('');
+    }
+  }, [isOpen, reset]);
 
   // Prevent background scroll while open
   useEffect(() => {
@@ -89,37 +131,43 @@ export default function BookingModal({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSelectedDate(val);
+    setSelectedSlot('');
+    setValue('scheduledDate', '', { shouldValidate: true });
+    fetchSlots(val);
+  };
+
   const onSubmit = async (data: BookingFormValues) => {
     try {
       await createBooking({
         technicianId,
         serviceId: data.serviceId,
-        // datetime-local gives a local-time string without timezone; convert to ISO before sending
-        scheduledDate: new Date(data.scheduledDate).toISOString(),
+        scheduledDate: data.scheduledDate,
         address: data.address,
         notes: data.notes,
       });
 
       toast.success('Booking request sent!');
-      reset();
-      onClose();
+      handleClose();
       router.push('/dashboard/customer/bookings');
     } catch (error: unknown) {
-      // Match the error-extraction pattern from the auth pages (register/login)
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
         'Failed to create booking. Please try again.';
       toast.error(errorMessage);
-      // Do not close or reset — let the user fix the input and retry
+      
+      // Refresh the slots to reflect any new bookings
+      if (selectedDate) {
+        fetchSlots(selectedDate);
+      }
     }
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  // handleClose has been moved up with useCallback
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current) handleClose();
@@ -127,10 +175,7 @@ export default function BookingModal({
 
   if (!isOpen) return null;
 
-  // Minimum datetime string for the native picker (now + 1 min)
-  const minDateTime = new Date(Date.now() + 60_000)
-    .toISOString()
-    .slice(0, 16);
+
 
   return (
     /* Fixed overlay */
@@ -211,7 +256,7 @@ export default function BookingModal({
               htmlFor="bm-scheduledDate"
               className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5"
             >
-              Scheduled Date &amp; Time
+              Scheduled Date
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
@@ -219,9 +264,10 @@ export default function BookingModal({
               </span>
               <input
                 id="bm-scheduledDate"
-                type="datetime-local"
-                min={minDateTime}
-                {...register('scheduledDate')}
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                value={selectedDate}
+                onChange={handleDateChange}
                 className={inputClass(!!errors.scheduledDate)}
               />
             </div>
@@ -229,6 +275,47 @@ export default function BookingModal({
               <p className="mt-1 text-xs font-medium text-red-500">
                 {errors.scheduledDate.message}
               </p>
+            )}
+
+            {selectedDate && (
+              <div className="mt-4 space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Select Time Slot (UTC)
+                </label>
+                {isLoadingSlots ? (
+                  <div className="flex items-center gap-2 py-2 text-xs font-semibold text-slate-500">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                    Loading available slots...
+                  </div>
+                ) : availableSlots.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {availableSlots.map((slot) => {
+                      const isSelected = selectedSlot === slot;
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSlot(slot);
+                            setValue('scheduledDate', `${selectedDate}T${slot}:00.000Z`, { shouldValidate: true });
+                          }}
+                          className={`px-2 py-2 text-xs font-bold rounded-xl transition-all border text-center ${
+                            isSelected
+                              ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                              : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-xs font-semibold text-amber-600 dark:text-amber-500 py-2 px-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl leading-relaxed">
+                    No available slots on this day.
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

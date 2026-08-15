@@ -44,3 +44,17 @@ export const getTechnicianById = async (id: string): Promise<Technician> => {
   const response = await api.get(`/technicians/${id}`);
   return response.data.data;
 };
+
+/**
+ * GET /technicians/:id/available-slots?date=YYYY-MM-DD
+ * Retrieves available booking slots for a technician on a specific date.
+ */
+export const getAvailableSlots = async (
+  id: string,
+  date: string
+): Promise<string[]> => {
+  const response = await api.get(`/technicians/${id}/available-slots`, {
+    params: { date }
+  });
+  return response.data.data;
+};
