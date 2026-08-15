@@ -10,7 +10,8 @@ import {
   Calendar,
   Briefcase,
   User,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getAssignedBookings, BookingAssignedItem } from '@/lib/bookings';
@@ -49,8 +50,8 @@ function OverviewSkeleton() {
       </div>
 
       {/* Stats Grid Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }).map((_, idx) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {Array.from({ length: 5 }).map((_, idx) => (
           <div key={idx} className="h-28 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6" />
         ))}
       </div>
@@ -137,6 +138,11 @@ export default function TechnicianDashboardPage() {
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
 
+  // Compute total earnings from paid, in-progress, and completed jobs (money already paid or guaranteed)
+  const totalEarnings = bookings
+    .filter(b => ['PAID', 'IN_PROGRESS', 'COMPLETED'].includes(b.status))
+    .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
   return (
     <div className="space-y-8 text-left max-w-5xl mx-auto">
       
@@ -198,7 +204,7 @@ export default function TechnicianDashboardPage() {
       )}
 
       {/* ─── Stats Cards Grid ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         
         {/* Stat Card 1: Pending Requests */}
         <div className="bg-white border border-slate-200/60 dark:border-slate-800/60 dark:bg-slate-900 rounded-3xl p-6 flex items-center justify-between gap-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
@@ -239,7 +245,20 @@ export default function TechnicianDashboardPage() {
           </div>
         </div>
 
-        {/* Stat Card 4: Average Rating */}
+        {/* Stat Card 4: Total Earnings (Paid/Guaranteed) */}
+        <div className="bg-white border border-slate-200/60 dark:border-slate-800/60 dark:bg-slate-900 rounded-3xl p-6 flex items-center justify-between gap-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+          <div className="space-y-1">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Earnings</h3>
+            <p className="text-4.5xl font-black text-slate-900 dark:text-white leading-none">
+              ৳{totalEarnings.toLocaleString()}
+            </p>
+          </div>
+          <div className="p-3.5 bg-green-50 dark:bg-green-950/20 text-green-600 rounded-full group-hover:scale-110 transition-transform duration-300">
+            <CreditCard className="h-6 w-6" />
+          </div>
+        </div>
+
+        {/* Stat Card 5: Average Rating */}
         <div className="bg-white border border-slate-200/60 dark:border-slate-800/60 dark:bg-slate-900 rounded-3xl p-6 flex items-center justify-between gap-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
           <div className="space-y-1">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average Rating</h3>
