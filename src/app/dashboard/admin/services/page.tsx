@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search,
   Plus,
-  MoreVertical,
   Edit2,
   Trash2,
   Droplet,
@@ -17,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import api from '@/lib/api';
+import { toast } from 'react-hot-toast';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -88,6 +88,11 @@ export default function AdminCategoriesServicesPage() {
   const [newServicePrice, setNewServicePrice] = useState('');
 
   const [editingService, setEditingService] = useState<ServiceOffer | null>(null);
+
+  // Category Edit and Delete States
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
 
   const loadServicesData = useCallback(async () => {
     try {
@@ -196,6 +201,56 @@ export default function AdminCategoriesServicesPage() {
     } catch (err) {
       console.error('Failed to create category:', err);
       showToast('Failed to create category.');
+    }
+  };
+
+  // Handle Edit Category Save
+  const handleEditCategorySave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory || !editCategoryName.trim()) return;
+
+    try {
+      const res = await api.patch(`/categories/${editingCategory.id}`, {
+        name: editCategoryName,
+      });
+      const updated = res.data.data;
+      
+      setCategories(prev =>
+        prev.map(c => (c.id === editingCategory.id ? { ...c, name: updated.name } : c))
+      );
+      setShowEditCategoryModal(false);
+      setEditingCategory(null);
+      showToast('Category updated successfully!');
+    } catch (err: unknown) {
+      console.error(err);
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      const msg = errorObj.response?.data?.message || 'Failed to update category.';
+      toast.error(msg);
+    }
+  };
+
+  // Handle Delete Category
+  const handleDeleteCategory = async (cat: Category) => {
+    if (cat.servicesCount > 0) {
+      toast.error(`Cannot delete category "${cat.name}" as it contains ${cat.servicesCount} linked services.`);
+      return;
+    }
+
+    const confirmDelete = window.confirm(`Are you sure you want to delete the category "${cat.name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/categories/${cat.id}`);
+      setCategories(prev => prev.filter(c => c.id !== cat.id));
+      if (selectedCategoryId === cat.id) {
+        setSelectedCategoryId('');
+      }
+      showToast('Category deleted successfully.');
+    } catch (err: unknown) {
+      console.error(err);
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      const msg = errorObj.response?.data?.message || 'Failed to delete category.';
+      toast.error(msg);
     }
   };
 
@@ -383,19 +438,36 @@ export default function AdminCategoriesServicesPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      {/* Active Status indicator */}
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        <span className={`h-1.5 w-1.5 rounded-full ${
-                          cat.status === 'Active' ? 'bg-blue-600 animate-pulse' : 'bg-slate-300'
-                        }`} />
-                        <span className={isSelected ? 'text-blue-600' : 'text-slate-400'}>
-                          {cat.status}
-                        </span>
-                      </div>
-                      {/* Three dot action icon */}
-                      <button className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
-                        <MoreVertical className="h-4 w-4" />
+                    <div className="flex items-center gap-1.5">
+                      {/* Edit Button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCategory(cat);
+                          setEditCategoryName(cat.name);
+                          setShowEditCategoryModal(true);
+                        }}
+                        className="p-1 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        title="Edit Category"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      
+                      {/* Delete Button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCategory(cat);
+                        }}
+                        disabled={cat.servicesCount > 0}
+                        className={`p-1 rounded-lg transition-colors ${
+                          cat.servicesCount > 0 
+                            ? 'text-slate-200 cursor-not-allowed' 
+                            : 'text-slate-400 hover:text-red-600 hover:bg-slate-50'
+                        }`}
+                        title={cat.servicesCount > 0 ? "Cannot delete category with services" : "Delete Category"}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -595,7 +667,54 @@ export default function AdminCategoriesServicesPage() {
         </div>
       )}
 
-      {/* ─── Add Service Modal ─── */}
+      {/* ─── Edit Category Modal ─── */}
+      {showEditCategoryModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-left">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-800">Edit Category</h3>
+              <button
+                onClick={() => { setShowEditCategoryModal(false); setEditingCategory(null); }}
+                className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
+              >
+                <X className="h-4.5 w-4.5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditCategorySave} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Appliance Repair"
+                  value={editCategoryName}
+                  onChange={(e) => setEditCategoryName(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditCategoryModal(false); setEditingCategory(null); }}
+                  className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {showAddServiceModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-left">
