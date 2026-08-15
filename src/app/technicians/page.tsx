@@ -207,7 +207,7 @@ function TechniciansCatalogContent() {
                         <Image
                           alt={tech.user?.name || 'Technician'}
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          src="/technician-placeholder.jpg"
+                          src={tech.user?.profilePhoto ?? '/technician-placeholder.jpg'}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />

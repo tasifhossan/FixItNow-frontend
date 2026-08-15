@@ -278,7 +278,7 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
                   <Image
                     alt={booking.technician?.user?.name ?? 'Technician'}
                     className="object-cover"
-                    src="/technician-placeholder.jpg"
+                    src={booking.technician?.user?.profilePhoto ?? '/technician-placeholder.jpg'}
                     width={56}
                     height={56}
                   />

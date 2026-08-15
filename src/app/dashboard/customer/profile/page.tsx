@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { 
@@ -9,7 +10,8 @@ import {
   Eye, 
   EyeOff, 
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Camera
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,6 +43,36 @@ function formatMemberSince(dateStr?: string) {
 
 export default function CustomerProfilePage() {
   const { user, refreshSession } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are allowed.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    setIsUploadingPhoto(true);
+    try {
+      await api.post('/users/me/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      await refreshSession();
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      alert(errorObj.response?.data?.message || 'Failed to upload photo.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   // Personal Info Form State
   const [name, setName] = useState(user?.name || '');
@@ -136,11 +168,45 @@ export default function CustomerProfilePage() {
       <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Avatar Container */}
-          <div className="relative w-24 h-24 rounded-full bg-blue-50 border border-slate-100 flex items-center justify-center text-blue-600 shadow-inner">
-            <span className="text-3xl font-black select-none">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </span>
+          <div 
+            onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
+            className="group relative w-24 h-24 rounded-full bg-blue-50 border border-slate-200 flex items-center justify-center text-blue-600 shadow-inner overflow-hidden cursor-pointer hover:opacity-90 transition-all duration-200"
+            title="Click to upload profile photo"
+          >
+            {user?.profilePhoto ? (
+              <Image
+                src={user.profilePhoto}
+                alt={user.name || 'User'}
+                className="object-cover"
+                fill
+                sizes="96px"
+              />
+            ) : (
+              <span className="text-3xl font-black select-none">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            )}
+            
+            {/* Hover overlay with Camera Icon */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-full">
+              <Camera className="w-6 h-6 text-white" />
+            </div>
+
+            {/* Spinner during upload */}
+            {isUploadingPhoto && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-full">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            )}
           </div>
+
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handlePhotoUpload}
+            className="hidden"
+            accept="image/*"
+          />
 
           {/* Profile details */}
           <div className="space-y-2 text-center md:text-left">

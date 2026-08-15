@@ -21,6 +21,7 @@ export interface BookingUser {
   email: string;
   phone: string | null;
   role: string;
+  profilePhoto?: string | null;
   isBlocked: boolean;
   createdAt: string;
   updatedAt: string;

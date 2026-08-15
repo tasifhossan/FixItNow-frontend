@@ -123,7 +123,7 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
                 <Image
                   alt={name}
                   className="object-cover"
-                  src="/technician-placeholder.jpg"
+                  src={technician.user?.profilePhoto ?? '/technician-placeholder.jpg'}
                   width={96}
                   height={96}
                 />

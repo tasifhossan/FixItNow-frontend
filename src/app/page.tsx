@@ -145,8 +145,8 @@ async function TopRatedProsSection() {
         role: (tech.skills[0] || 'Specialist').toUpperCase(),
         rating: tech.averageRating || 5.0,
         reviews: tech.totalReviews || 12,
-        // Use local placeholder since no profile photo is stored in backend
-        image: '/technician-placeholder.jpg'
+        // Use profilePhoto from API if available, else placeholder
+        image: tech.user?.profilePhoto ?? '/technician-placeholder.jpg'
       }));
 
       // Merge: real technicians first, then mock ones to pad to 4

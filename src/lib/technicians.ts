@@ -7,6 +7,7 @@ export interface UserProfileSummary {
   email: string;
   phone: string;
   role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN';
+  profilePhoto?: string | null;
   isBlocked: boolean;
   createdAt: string;
 }

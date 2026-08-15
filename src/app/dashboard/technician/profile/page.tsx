@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { 
   Check, 
   X, 
-  Plus 
+  Plus,
+  Camera
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import api from '@/lib/api';
 import { 
   getMyTechnicianProfile, 
   updateTechnicianProfile, 
@@ -46,6 +48,38 @@ function ProfileSkeleton() {
 
 export default function TechnicianProfilePage() {
   const [profile, setProfile] = useState<TechnicianProfile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Only image files are allowed.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    setIsUploadingPhoto(true);
+    try {
+      await api.post('/users/me/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success('Profile photo uploaded successfully!');
+      await fetchProfile();
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      toast.error(errorObj.response?.data?.message || 'Failed to upload photo.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const [bioInput, setBioInput] = useState<string>('');
   const [rateInput, setRateInput] = useState<string>('');
   const [skills, setSkills] = useState<string[]>([]);
@@ -254,20 +288,45 @@ export default function TechnicianProfilePage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
             <div className="flex flex-col sm:flex-row items-center gap-5">
               {/* Photo Avatar */}
-              <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
+              <div 
+                onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
+                className="group relative w-24 h-24 rounded-full overflow-hidden border-2 border-slate-100 dark:border-slate-800 shadow-sm shrink-0 cursor-pointer"
+                title="Click to upload profile photo"
+              >
                 <Image 
-                  src="/mike_johnson_avatar.png" 
+                  src={profile?.user?.profilePhoto ?? '/technician-placeholder.jpg'} 
                   alt={profile?.user?.name || 'Technician'} 
-                  width={96}
-                  height={96}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="96px"
+                  className="object-cover"
                 />
+                
+                {/* Hover overlay with Camera Icon */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+
+                {/* Spinner during upload */}
+                {isUploadingPhoto && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+
                 {profile?.isVerified && (
-                  <span className="absolute bottom-1 right-1 flex items-center justify-center h-5 w-5 rounded-full bg-blue-600 text-white shadow-sm">
+                  <span className="absolute bottom-1 right-1 flex items-center justify-center h-5 w-5 rounded-full bg-blue-600 text-white shadow-sm z-10">
                     <Check className="h-3 w-3 stroke-[3]" />
                   </span>
                 )}
               </div>
+
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoUpload}
+                className="hidden"
+                accept="image/*"
+              />
               
               <div className="space-y-1.5 text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -287,10 +346,11 @@ export default function TechnicianProfilePage() {
             </div>
 
             <button
-              onClick={() => toast.success('Photo editing dialog triggered (mock)')}
-              className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors shrink-0 active:scale-95 cursor-pointer"
+              onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
+              disabled={isUploadingPhoto}
+              className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300 font-bold rounded-xl text-xs transition-colors shrink-0 active:scale-95 cursor-pointer disabled:opacity-50"
             >
-              Edit Photo
+              {isUploadingPhoto ? 'Uploading...' : 'Edit Photo'}
             </button>
           </div>
 
