@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { X, Calendar, MapPin, Wrench, FileText } from 'lucide-react';
 import { createBooking } from '../lib/bookings';
 import { getAvailableSlots } from '../lib/technicians';
+import { toUTCDateFromDhaka } from '../lib/date';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface BookingModalProps {
@@ -297,8 +298,7 @@ export default function BookingModal({
                           type="button"
                           onClick={() => {
                             setSelectedSlot(slot);
-                            const utcMs = Date.parse(`${selectedDate}T${slot}:00.000Z`) - 6 * 60 * 60 * 1000;
-                            setValue('scheduledDate', new Date(utcMs).toISOString(), { shouldValidate: true });
+                            setValue('scheduledDate', toUTCDateFromDhaka(selectedDate, slot), { shouldValidate: true });
                           }}
                           className={`px-2 py-2 text-xs font-bold rounded-xl transition-all border text-center ${
                             isSelected
