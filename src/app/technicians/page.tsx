@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight, Star, ShieldAlert } from 'lucide-react';
 import { getTechnicians, Technician, GetTechniciansParams } from '../../lib/technicians';
@@ -203,10 +204,12 @@ function TechniciansCatalogContent() {
                       className="glass-card rounded-xl overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 border border-white/40 text-left group justify-between"
                     >
                       <div className="h-48 overflow-hidden bg-slate-100 dark:bg-slate-900 relative">
-                        <img 
-                          alt={tech.user?.name || 'Technician'} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
+                        <Image
+                          alt={tech.user?.name || 'Technician'}
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          src="/technician-placeholder.jpg"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                         {tech.isAvailable ? (
                           <span className="absolute top-3 right-3 bg-green-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow">

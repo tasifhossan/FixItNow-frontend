@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ChevronLeft, Star, MessageSquare, Wrench, ShieldCheck, UserCheck, Clock } from 'lucide-react';
 import { getTechnicianById } from '../../../lib/technicians';
@@ -119,10 +120,12 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
             {/* Bio Card */}
             <div className="glass-card p-8 rounded-2xl border border-white/40 flex flex-col sm:flex-row gap-6 items-start">
               <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0 border border-white/20 shadow-md">
-                <img 
-                  alt={name} 
-                  className="w-full h-full object-cover" 
-                  src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
+                <Image
+                  alt={name}
+                  className="object-cover"
+                  src="/technician-placeholder.jpg"
+                  width={96}
+                  height={96}
                 />
               </div>
               <div className="flex-1 space-y-3">

@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Search, 
   MapPin, 
@@ -144,8 +145,8 @@ async function TopRatedProsSection() {
         role: (tech.skills[0] || 'Specialist').toUpperCase(),
         rating: tech.averageRating || 5.0,
         reviews: tech.totalReviews || 12,
-        // Reuse original profile image URL
-        image: 'https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw'
+        // Use local placeholder since no profile photo is stored in backend
+        image: '/technician-placeholder.jpg'
       }));
 
       // Merge: real technicians first, then mock ones to pad to 4
@@ -164,11 +165,12 @@ async function TopRatedProsSection() {
         >
           {/* Card Image */}
           <div className="h-56 overflow-hidden bg-slate-50 relative">
-            <img 
-              alt={pro.name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            <Image
+              alt={pro.name}
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               src={pro.image}
-              loading="lazy"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           </div>
           
@@ -269,10 +271,13 @@ export default function Home() {
 
           {/* Right Hero Image */}
           <div className="relative w-full h-[320px] sm:h-[380px] lg:h-[450px] rounded-[24px] overflow-hidden shadow-xl shadow-blue-900/5">
-            <img 
-              alt="Smiling technician fixing home appliance" 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
+            <Image
+              alt="Smiling technician fixing home appliance"
+              className="object-cover"
+              src="/hero-technician.jpg"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
             />
           </div>
         </div>

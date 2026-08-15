@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, notFound } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { ChevronLeft, Calendar, MapPin, Wrench, FileText, Star, CreditCard, MessageSquare, Shield } from 'lucide-react';
@@ -274,10 +275,12 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/50 shrink-0">
-                  <img
-                    alt={booking.technician?.user?.name}
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida/AP1WRLu55IfUGrQFjTmMKBT0DLAr96dINwJeTKRRYQ6CrtGr3XvAFxhf38UYmvp25ns4MIif-EDYDOJr5keMlS7AfjOUaX5kPJSGQhOIVHpClyQF5OOiiFSpUnrxGQcAWJBKjnr0F30kfROyMsEN3piy-t0ELwccyOOfW6Mjn1ap4vpd6Hx1yGrNd6kCEb1fTznSodOTkpDA08sW2SB1r3cIhhqCGhFiAXDEHgxKgUeSn43iXMRtYOp2wT0hwGw"
+                  <Image
+                    alt={booking.technician?.user?.name ?? 'Technician'}
+                    className="object-cover"
+                    src="/technician-placeholder.jpg"
+                    width={56}
+                    height={56}
                   />
                 </div>
                 <div>
