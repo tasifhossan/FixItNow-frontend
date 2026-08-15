@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Bell, 
   CheckCircle, 
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getAssignedBookings, BookingAssignedItem } from '@/lib/bookings';
-import { getMyTechnicianProfile, updateAvailability, TechnicianProfile } from '@/lib/technicianProfile';
+import { getMyTechnicianProfile, updateAvailability, getWorkingHours, TechnicianProfile } from '@/lib/technicianProfile';
 import BookingActionButtons from '@/components/BookingActionButtons';
 
 // Helper to format date exactly like Figma (e.g., Oct 24, 2:00 PM)
@@ -74,16 +75,19 @@ function OverviewSkeleton() {
 export default function TechnicianDashboardPage() {
   const [profile, setProfile] = useState<TechnicianProfile | null>(null);
   const [bookings, setBookings] = useState<BookingAssignedItem[]>([]);
+  const [workingHoursCount, setWorkingHoursCount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
     try {
-      const [profileData, bookingsResponse] = await Promise.all([
+      const [profileData, bookingsResponse, hoursData] = await Promise.all([
         getMyTechnicianProfile(),
         getAssignedBookings({ limit: 100 }),
+        getWorkingHours().catch(() => [])
       ]);
       setProfile(profileData);
       setBookings(bookingsResponse.data);
+      setWorkingHoursCount(hoursData.length);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load dashboard data');
@@ -171,6 +175,27 @@ export default function TechnicianDashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Missing-hours banner prompt */}
+      {workingHoursCount !== null && workingHoursCount === 0 && (
+        <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] text-left">
+          <div className="flex items-start gap-4">
+            <Calendar className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Set your working hours</h4>
+              <p className="text-xs text-amber-700/85 dark:text-amber-300/80 font-semibold leading-relaxed">
+                You haven&apos;t configured your weekly work schedule. Customers won&apos;t be able to book service appointments with you until you configure your available days and timeframes.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/technician/profile"
+            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer shrink-0"
+          >
+            Configure Hours
+          </Link>
+        </div>
+      )}
 
       {/* ─── Stats Cards Grid ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

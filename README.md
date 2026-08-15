@@ -34,3 +34,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Deployment & Secrets
+> [!IMPORTANT]
+> This frontend application uses server-side Next.js Middleware to verify authentication refresh tokens.
+> * You **MUST** provision the `JWT_REFRESH_SECRET` environment variable in your production hosting platform's environment settings.
+> * If the JWT refresh token secret is rotated on the backend, it **MUST** be rotated on the frontend environment variables concurrently. Failure to keep them in sync will cause all dashboard requests to be rejected.

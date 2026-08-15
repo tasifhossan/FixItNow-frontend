@@ -8,7 +8,14 @@ import {
   Plus 
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getMyTechnicianProfile, updateTechnicianProfile, updateAvailability, TechnicianProfile } from '@/lib/technicianProfile';
+import { 
+  getMyTechnicianProfile, 
+  updateTechnicianProfile, 
+  updateAvailability, 
+  TechnicianProfile,
+  getWorkingHours,
+  updateWorkingHours
+} from '@/lib/technicianProfile';
 
 function ProfileSkeleton() {
   return (
@@ -44,17 +51,50 @@ export default function TechnicianProfilePage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState<string>('');
 
+  const [workingHours, setWorkingHours] = useState<{[key: number]: { isOpen: boolean; startTime: string; endTime: string }}>({
+    0: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    1: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    2: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    3: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    4: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    5: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+    6: { isOpen: false, startTime: '09:00', endTime: '17:00' }
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSavingBio, setIsSavingBio] = useState<boolean>(false);
   const [isUpdatingRate, setIsUpdatingRate] = useState<boolean>(false);
+  const [isSavingHours, setIsSavingHours] = useState<boolean>(false);
 
   const fetchProfile = async () => {
     try {
-      const data = await getMyTechnicianProfile();
+      const [data, hoursData] = await Promise.all([
+        getMyTechnicianProfile(),
+        getWorkingHours()
+      ]);
       setProfile(data);
       setBioInput(data.bio || '');
       setRateInput(data.hourlyRate ? String(data.hourlyRate) : '');
       setSkills(data.skills || []);
+
+      const updated: Record<number, { isOpen: boolean; startTime: string; endTime: string }> = {
+        0: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        1: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        2: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        3: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        4: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        5: { isOpen: false, startTime: '09:00', endTime: '17:00' },
+        6: { isOpen: false, startTime: '09:00', endTime: '17:00' }
+      };
+      
+      hoursData.forEach((w) => {
+        updated[w.dayOfWeek] = {
+          isOpen: true,
+          startTime: w.startTime,
+          endTime: w.endTime
+        };
+      });
+      setWorkingHours(updated);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load profile data');
@@ -162,6 +202,29 @@ export default function TechnicianProfilePage() {
     }
   };
 
+  const handleSaveWorkingHours = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingHours(true);
+    try {
+      const payload = Object.entries(workingHours)
+        .filter(([, value]) => value.isOpen)
+        .map(([key, value]) => ({
+          dayOfWeek: Number(key),
+          startTime: value.startTime,
+          endTime: value.endTime,
+        }));
+
+      await updateWorkingHours(payload);
+      toast.success('Working hours updated successfully!');
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(err.response?.data?.message || err.message || 'Failed to save working hours');
+    } finally {
+      setIsSavingHours(false);
+    }
+  };
+
   if (isLoading) {
     return <ProfileSkeleton />;
   }
@@ -258,6 +321,114 @@ export default function TechnicianProfilePage() {
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center min-w-[90px] cursor-pointer"
                 >
                   {isSavingBio ? 'Saving...' : 'Save Bio'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Card 6: Working Hours */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Working Hours</h3>
+            <p className="text-xs font-bold text-slate-550 dark:text-slate-450 mt-1 mb-5">
+              Set your weekly work schedule. Clients can only book appointments during these hours.
+            </p>
+
+            <form onSubmit={handleSaveWorkingHours} className="space-y-4">
+              <div className="space-y-3.5 divide-y divide-slate-100 dark:divide-slate-800/60">
+                {[
+                  { label: 'Sunday', value: 0 },
+                  { label: 'Monday', value: 1 },
+                  { label: 'Tuesday', value: 2 },
+                  { label: 'Wednesday', value: 3 },
+                  { label: 'Thursday', value: 4 },
+                  { label: 'Friday', value: 5 },
+                  { label: 'Saturday', value: 6 },
+                ].map((day) => {
+                  const config = workingHours[day.value] || { isOpen: false, startTime: '09:00', endTime: '17:00' };
+                  return (
+                    <div key={day.value} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3.5 first:pt-0 first:border-t-0">
+                      {/* Day Label & Toggle */}
+                      <div className="flex items-center justify-between sm:justify-start gap-4">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 min-w-[80px]">
+                          {day.label}
+                        </span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWorkingHours(prev => ({
+                              ...prev,
+                              [day.value]: {
+                                ...prev[day.value],
+                                isOpen: !prev[day.value]?.isOpen
+                              }
+                            }));
+                          }}
+                          className={`relative inline-flex h-5.5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            config.isOpen ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              config.isOpen ? 'translate-x-4.5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                          {config.isOpen ? 'Open' : 'Closed'}
+                        </span>
+                      </div>
+
+                      {/* Time selectors (only visible if Day is Open) */}
+                      {config.isOpen ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="time"
+                            value={config.startTime}
+                            onChange={(e) => {
+                              setWorkingHours(prev => ({
+                                ...prev,
+                                [day.value]: {
+                                  ...prev[day.value],
+                                  startTime: e.target.value
+                                }
+                              }));
+                            }}
+                            className="px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
+                          />
+                          <span className="text-xs text-slate-400 font-bold">to</span>
+                          <input
+                            type="time"
+                            value={config.endTime}
+                            onChange={(e) => {
+                              setWorkingHours(prev => ({
+                                ...prev,
+                                [day.value]: {
+                                  ...prev[day.value],
+                                  endTime: e.target.value
+                                }
+                              }));
+                            }}
+                            className="px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 sm:pr-8 italic">
+                          Unavailable
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex justify-end pt-3">
+                <button
+                  type="submit"
+                  disabled={isSavingHours}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold rounded-xl text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center min-w-[130px] cursor-pointer"
+                >
+                  {isSavingHours ? 'Saving...' : 'Save Working Hours'}
                 </button>
               </div>
             </form>

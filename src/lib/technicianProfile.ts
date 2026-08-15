@@ -55,3 +55,31 @@ export const getMyTechnicianProfile = async (): Promise<TechnicianProfile> => {
   return response.data.data;
 };
 
+export interface WorkingHours {
+  id?: string;
+  technicianProfileId?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+/**
+ * GET /technicians/me/working-hours
+ * Retrieves the technician's configured working hours.
+ */
+export const getWorkingHours = async (): Promise<WorkingHours[]> => {
+  const response = await api.get('/technicians/me/working-hours');
+  return response.data.data;
+};
+
+/**
+ * PUT /technicians/me/working-hours
+ * Updates the technician's configured working hours.
+ */
+export const updateWorkingHours = async (
+  workingHours: { dayOfWeek: number; startTime: string; endTime: string }[]
+): Promise<WorkingHours[]> => {
+  const response = await api.put('/technicians/me/working-hours', workingHours);
+  return response.data.data;
+};
+
