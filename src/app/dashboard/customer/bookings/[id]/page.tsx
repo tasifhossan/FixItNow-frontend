@@ -123,9 +123,24 @@ export default function BookingDetailPage({ params }: BookingDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-left animate-pulse py-6">
-        <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded mb-4" />
-        <div className="glass-card p-6 rounded-2xl border border-white/40 h-48 bg-white/20 dark:bg-slate-900/20" />
+      <div className="space-y-6 text-left py-6 animate-pulse">
+        {/* Back Link skeleton */}
+        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
+
+        {/* Grid skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/40 bg-white/20 dark:bg-slate-900/20 space-y-6 h-96">
+              <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-20 w-3/4 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+              <div className="h-24 w-full bg-slate-100 dark:bg-slate-800 rounded-xl" />
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-2xl border border-white/40 bg-white/20 dark:bg-slate-900/20 h-48" />
+            <div className="glass-card p-6 rounded-2xl border border-white/40 bg-white/20 dark:bg-slate-900/20 h-48" />
+          </div>
+        </div>
       </div>
     );
   }

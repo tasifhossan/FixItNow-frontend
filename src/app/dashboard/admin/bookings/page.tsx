@@ -360,11 +360,28 @@ export default function AdminBookingsOversightPage() {
             
             <tbody className="divide-y divide-slate-50 text-sm">
               {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-400 font-medium">
-                    Loading bookings oversight log...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="px-6 py-4"><div className="h-4 w-16 bg-slate-100 dark:bg-slate-800 rounded" /></td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                        <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                        <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-12 bg-slate-100 dark:bg-slate-800 rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded" /></td>
+                    <td className="px-6 py-4"><div className="h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full" /></td>
+                    <td className="px-6 py-4 text-right"><div className="inline-block h-8 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg" /></td>
+                  </tr>
+                ))
               ) : displayedBookings.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-slate-400 font-medium">

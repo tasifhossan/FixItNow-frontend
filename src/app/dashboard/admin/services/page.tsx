@@ -73,6 +73,7 @@ export default function AdminCategoriesServicesPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modal States
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -95,6 +96,7 @@ export default function AdminCategoriesServicesPage() {
   const [editCategoryName, setEditCategoryName] = useState('');
 
   const loadServicesData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const categoriesRes = await api.get('/categories');
       const apiCategories = categoriesRes.data.data || [];
@@ -126,6 +128,8 @@ export default function AdminCategoriesServicesPage() {
     } catch (err) {
       console.error('Failed to fetch categories or services:', err);
       showToast('Failed to load data from backend api.');
+    } finally {
+      setIsLoading(false);
     }
   }, [selectedCategoryId]);
 
@@ -157,6 +161,36 @@ export default function AdminCategoriesServicesPage() {
   const activeServices = useMemo(() => {
     return services.filter(s => s.categoryId === selectedCategoryId);
   }, [services, selectedCategoryId]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 text-left animate-pulse">
+        {/* Header skeleton */}
+        <div className="space-y-2">
+          <div className="h-7 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+          <div className="h-4 w-96 bg-slate-100 dark:bg-slate-850 rounded" />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6">
+          {/* Categories Panel Skeleton */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="h-20 bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl" />
+              ))}
+            </div>
+          </div>
+
+          {/* Services Panel Skeleton */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="h-16 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div className="h-96 w-full bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Toggle Service Status
   const handleToggleServiceStatus = async (serviceId: string) => {
@@ -486,14 +520,14 @@ export default function AdminCategoriesServicesPage() {
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-blue-600 text-white rounded-2xl">
-                    {ICON_MAP[selectedCategory.iconKey] || <Droplet className="h-6 w-6" />}
+                    {ICON_MAP[selectedCategory?.iconKey || ''] || <Droplet className="h-6 w-6" />}
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-slate-800 leading-none">
-                      {selectedCategory.name} Services
+                      {selectedCategory?.name} Services
                     </h2>
                     <p className="text-xs text-slate-400 font-semibold mt-2">
-                      Manage specific offerings within {selectedCategory.name}.
+                      Manage specific offerings within {selectedCategory?.name}.
                     </p>
                   </div>
                 </div>
