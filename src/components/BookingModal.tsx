@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,7 +61,13 @@ export default function BookingModal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -174,11 +181,9 @@ export default function BookingModal({
     if (e.target === overlayRef.current) handleClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-
-
-  return (
+  return createPortal(
     /* Fixed overlay */
     <div
       ref={overlayRef}
@@ -383,6 +388,7 @@ export default function BookingModal({
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
