@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import RoleGuard from '../../../components/RoleGuard';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -21,14 +21,15 @@ export default function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
-  const [globalQuery, setGlobalQuery] = React.useState('');
 
-  const handleGlobalSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && globalQuery.trim()) {
-      router.push(`/dashboard/admin/users?search=${encodeURIComponent(globalQuery.trim())}`);
-    }
+  const getHeaderTitle = () => {
+    if (pathname === '/dashboard/admin') return 'Admin Dashboard';
+    if (pathname.startsWith('/dashboard/admin/users')) return 'Users';
+    if (pathname.startsWith('/dashboard/admin/technicians')) return 'Technicians';
+    if (pathname.startsWith('/dashboard/admin/services')) return 'Services';
+    if (pathname.startsWith('/dashboard/admin/bookings')) return 'Bookings';
+    return 'Admin Dashboard';
   };
 
   const navItems = [
@@ -92,25 +93,14 @@ export default function AdminDashboardLayout({
         </aside>
 
         {/* ─── Content Area ─── */}
-        <main className="flex-1 bg-slate-50/80 flex flex-col">
+        <main className="flex-1 bg-[#F8FAFC] flex flex-col">
           
           {/* Top Header Bar */}
           <header className="h-16 border-b border-slate-200/60 bg-white px-6 md:px-8 flex items-center justify-between shrink-0 select-none">
-            {/* Search Bar */}
-            <div className="flex items-center gap-2.5 px-3.5 py-2 border border-slate-200/80 rounded-xl bg-slate-50/50 w-full max-w-sm">
-              <svg className="h-4 w-4 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input 
-                type="text" 
-                placeholder="Search users, technicians, emails..." 
-                value={globalQuery}
-                onChange={(e) => setGlobalQuery(e.target.value)}
-                onKeyDown={handleGlobalSearch}
-                className="w-full bg-transparent border-none text-xs focus:outline-none text-slate-700 font-medium placeholder:text-slate-400"
-              />
-            </div>
+            {/* Header Title */}
+            <h1 className="text-base font-bold text-slate-800 tracking-tight">
+              {getHeaderTitle()}
+            </h1>
 
             {/* Right: Bell + User Profile */}
             <div className="flex items-center gap-4">

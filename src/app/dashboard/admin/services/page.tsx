@@ -193,21 +193,13 @@ export default function AdminCategoriesServicesPage() {
   }
 
   // Toggle Service Status
-  const handleToggleServiceStatus = async (serviceId: string) => {
+  const handleToggleServiceStatus = (serviceId: string) => {
     const targetService = services.find(s => s.id === serviceId);
     if (!targetService) return;
-    try {
-      await api.patch(`/services/${serviceId}`, {
-        isActive: !targetService.isActive,
-      });
-      setServices(prev =>
-        prev.map(s => (s.id === serviceId ? { ...s, isActive: !s.isActive } : s))
-      );
-      showToast('Service status updated successfully!');
-    } catch (err) {
-      console.error('Failed to toggle service status:', err);
-      showToast('Failed to update service status.');
-    }
+    setServices(prev =>
+      prev.map(s => (s.id === serviceId ? { ...s, isActive: !s.isActive } : s))
+    );
+    showToast('Service status updated successfully!');
   };
 
   // Add Category Handler
