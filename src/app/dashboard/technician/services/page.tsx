@@ -219,7 +219,7 @@ export default function TechnicianServicesPage() {
 
                       <button
                         onClick={() => handleAddService(service.id)}
-                        className="px-4 py-2 bg-[#78350F] hover:bg-[#632a0a] text-white font-bold rounded-xl text-[10px] transition-all shadow-sm shrink-0 active:scale-95 cursor-pointer"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm shrink-0 active:scale-95 cursor-pointer"
                       >
                         + Add
                       </button>
