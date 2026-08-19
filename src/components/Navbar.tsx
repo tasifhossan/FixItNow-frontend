@@ -36,26 +36,42 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-7">
             <Link
               href="/services"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                pathname === '/services'
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-slate-600 hover:text-blue-600 font-medium'
+              }`}
             >
               Services
             </Link>
             <Link
               href="/technicians"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                pathname === '/technicians'
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-slate-600 hover:text-blue-600 font-medium'
+              }`}
             >
               Technicians
             </Link>
             <Link
               href="/#how-it-works"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors duration-200"
+              className={`text-sm transition-colors duration-200 ${
+                pathname === '/#how-it-works'
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-slate-600 hover:text-blue-600 font-medium'
+              }`}
             >
               How it Works
             </Link>
             {user && (
               <Link
                 href={`/dashboard/${user.role.toLowerCase()}`}
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200"
+                className={`text-sm transition-colors duration-200 ${
+                  pathname.startsWith('/dashboard')
+                    ? 'text-blue-600 font-semibold'
+                    : 'text-slate-600 hover:text-blue-600 font-medium'
+                }`}
               >
                 Dashboard
               </Link>
