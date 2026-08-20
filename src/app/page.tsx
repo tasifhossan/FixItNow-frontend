@@ -550,10 +550,10 @@ export default function Home() {
             <p className="text-xs text-slate-400">© 2026 FixItNow. All rights reserved.</p>
           </div>
           <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-xs font-semibold text-slate-300">
-            <a className="hover:text-white transition-colors" href="#">About Us</a>
-            <a className="hover:text-white transition-colors" href="#">Terms of Service</a>
-            <a className="hover:text-white transition-colors" href="#">Privacy Policy</a>
-            <a className="hover:text-white transition-colors" href="#">Contact Support</a>
+            <Link className="hover:text-white transition-colors" href="/about">About Us</Link>
+            <Link className="hover:text-white transition-colors" href="/terms">Terms of Service</Link>
+            <Link className="hover:text-white transition-colors" href="/privacy">Privacy Policy</Link>
+            <Link className="hover:text-white transition-colors" href="/contact">Contact Support</Link>
           </div>
         </div>
       </footer>
