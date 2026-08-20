@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import RoleGuard from '../../../components/RoleGuard';
@@ -147,10 +148,22 @@ export default function CustomerDashboardLayout({
                 </svg>
               </button>
 
-              {/* User Avatar dropdown */}
+              {/* User Avatar */}
               <div className="h-9 border-l border-slate-200 dark:border-slate-800 pl-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px] shrink-0 shadow-sm border border-slate-100">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-sm border border-slate-100 dark:border-slate-800">
+                  {user?.profilePhoto ? (
+                    <Image
+                      src={user.profilePhoto}
+                      alt={user.name || 'User'}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px]">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
                 </div>
                 <span className="hidden sm:inline text-xs font-bold text-slate-600 dark:text-slate-200">
                   {user?.name ? `${user.name.split(' ')[0]} ${user.name.split(' ')[1] ? user.name.split(' ')[1].charAt(0) + '.' : ''}` : 'Customer'}

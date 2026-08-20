@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import RoleGuard from '../../../components/RoleGuard';
@@ -114,8 +115,20 @@ export default function AdminDashboardLayout({
 
               {/* User Profile */}
               <div className="flex items-center gap-2.5 cursor-pointer group">
-                <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-sm border border-slate-200">
+                  {user?.profilePhoto ? (
+                    <Image
+                      src={user.profilePhoto}
+                      alt={user.name || 'Admin'}
+                      width={36}
+                      height={36}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                    </div>
+                  )}
                 </div>
                 <span className="hidden sm:inline text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
                   {user?.name || 'Admin User'}
