@@ -270,11 +270,23 @@ export default function CustomerDashboardPage() {
                       {/* Provider info column */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-700 font-bold text-[10px]">
-                            {booking.technician?.user?.name ? (
-                              booking.technician.user.name.charAt(0).toUpperCase()
+                          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center">
+                            {booking.technician?.user?.profilePhoto ? (
+                              <Image
+                                src={booking.technician.user.profilePhoto}
+                                alt={booking.technician.user.name || 'Technician'}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
-                              <User className="h-4 w-4" />
+                              <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px]">
+                                {booking.technician?.user?.name ? (
+                                  booking.technician.user.name.charAt(0).toUpperCase()
+                                ) : (
+                                  <User className="h-4 w-4" />
+                                )}
+                              </div>
                             )}
                           </div>
                           <div>

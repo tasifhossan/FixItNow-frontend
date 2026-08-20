@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Calendar, MapPin, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { getMyBookings, BookingListItem } from '../../../../lib/bookings';
@@ -214,11 +215,23 @@ function CustomerBookingsContent() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex items-center gap-3.5">
                       {/* Technician Avatar */}
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-700 font-bold text-xs shadow-sm">
-                        {booking.technician?.user?.name ? (
-                          booking.technician.user.name.charAt(0).toUpperCase()
+                      <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center shadow-sm">
+                        {booking.technician?.user?.profilePhoto ? (
+                          <Image
+                            src={booking.technician.user.profilePhoto}
+                            alt={booking.technician.user.name || 'Technician'}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <User className="h-5 w-5" />
+                          <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                            {booking.technician?.user?.name ? (
+                              booking.technician.user.name.charAt(0).toUpperCase()
+                            ) : (
+                              <User className="h-5 w-5" />
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="space-y-0.5">
