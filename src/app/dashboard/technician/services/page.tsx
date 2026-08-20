@@ -10,6 +10,8 @@ import { getServices, Service } from '@/lib/services';
 import { getMyTechnicianProfile, assignServices, removeService } from '@/lib/technicianProfile';
 import { getTechnicianById } from '@/lib/technicians';
 
+export const dynamic = 'force-dynamic';
+
 function ServicesSkeleton() {
   return (
     <div className="space-y-8 animate-pulse text-left max-w-5xl mx-auto">

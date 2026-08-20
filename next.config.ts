@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Match all dashboard routes for all roles
+        source: "/dashboard/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
