@@ -40,6 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(token);
       setAccessTokenState(token);
 
+      // Save token in frontend cookie for Next.js middleware routing
+      document.cookie = `accessToken=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+
       // Fetch the actual user profile details
       const profileResponse = await api.get('/users/me');
       setUser(profileResponse.data.data);
@@ -48,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(null);
       setAccessTokenState(null);
       setUser(null);
+      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(token);
       setAccessTokenState(token);
       setUser(loggedInUser);
+
+      // Save token in frontend cookie for Next.js middleware routing
+      document.cookie = `accessToken=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+
       return loggedInUser;
     } catch (error) {
       throw error;
@@ -76,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(null);
       setAccessTokenState(null);
       setUser(null);
+      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
   };
 
