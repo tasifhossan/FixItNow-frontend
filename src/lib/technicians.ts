@@ -32,6 +32,7 @@ export interface GetTechniciansParams {
   searchTerm?: string;
   page?: number | string;
   limit?: number | string;
+  serviceId?: string;
 }
 
 export const getTechnicians = async (
