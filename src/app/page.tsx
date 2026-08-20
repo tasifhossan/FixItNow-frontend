@@ -543,14 +543,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Footer Section ─── */}
-      <footer className="w-full bg-slate-900 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between gap-8 text-slate-400 text-left">
-          <div className="flex flex-col gap-3">
-            <span className="text-xl font-bold text-white tracking-tight">FixItNow</span>
-            <p className="text-xs text-slate-500">© 2024 FixItNow. All rights reserved.</p>
+      <footer className="w-full bg-slate-950 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row justify-between items-center gap-6 text-slate-400 text-left">
+          <div className="flex flex-col gap-1.5 items-center sm:items-start w-full sm:w-auto">
+            <span className="text-xl font-extrabold text-white tracking-tight">FixItNow</span>
+            <p className="text-xs text-slate-400">© 2026 FixItNow. All rights reserved.</p>
           </div>
-          <div className="flex flex-col md:items-end gap-3 text-xs font-medium">
+          <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-xs font-semibold text-slate-300">
             <a className="hover:text-white transition-colors" href="#">About Us</a>
             <a className="hover:text-white transition-colors" href="#">Terms of Service</a>
             <a className="hover:text-white transition-colors" href="#">Privacy Policy</a>
