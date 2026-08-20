@@ -1,172 +1,100 @@
-# FixItNow - Home Services Marketplace for Bangladesh
+# 🛠️ FixItNow - Home Services Marketplace for Bangladesh
 
-FixItNow is a premium, high-trust on-demand home services marketplace designed to connect Customers with verified local Technicians (plumbers, electricians, cleaners, and AC repair technicians) in Bangladesh.
+FixItNow is a premium, high-trust on-demand home services marketplace designed to connect Customers with verified local Technicians (plumbers, electricians, cleaners, and AC repair technicians) in Bangladesh. This repository hosts the modern Next.js-based client application.
 
----
-
-## Live Demo
-Live Demo URL: `[ADD DEPLOYED URL HERE]`
+🔗 **Live Demo URL**: [https://fix-it-now-frontend-three.vercel.app/](https://fix-it-now-frontend-three.vercel.app/)
 
 ---
 
-## Tech Stack
-
-### Frontend Core & Libraries
-* **Framework**: Next.js (v15.5.23) using the React 19 App Router layout
-* **Language**: TypeScript
-* **State & Forms**: React Hook Form (v7.85.0) with `@hookform/resolvers` and Zod (v4.4.3)
-* **HTTP Client**: Axios (v1.19.0) with automatic interceptors for bearer tokens
-* **Styling**: Tailwind CSS (v3.4.1) & PostCSS
-* **Icons**: Lucide React (v1.31.0)
-* **Notifications**: React Hot Toast (v2.6.0)
-* **Auth helpers**: Jose (v6.2.8) for cryptographic signature checks of tokens on Middleware
+## 📋 Table of Contents
+1. [Tech Stack](#-tech-stack)
+2. [Key Features](#-key-features)
+3. [Folder Structure](#-folder-structure)
+4. [Getting Started & Local Setup](#-getting-started--local-setup)
+5. [Environment Configuration](#-environment-configuration)
 
 ---
 
-## Features by Role
+## 💻 Tech Stack
 
-### 🌍 Public / Guest
-* **Browse Categories & Services**: Sleek landing page and directory showcasing cleaning, plumbing, electrical, and AC services.
-* **Browse & Search Technicians**: Access verified technician profiles with their hourly rates, ratings, and reviews.
-* **Authentication**: Multi-role registration (Customer/Technician selection) and login.
+### Framework & Core
+![Next.js](https://img.shields.io/badge/Next.js-15.5.23-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 
-### 👤 Customer
-* **Profile Management**: Update user profile details (name, phone) and change password securely.
-* **Slot-Based Booking**: Book verified technicians by choosing a service, checking live hourly slot availability calculated from the technician's working hours, and inputting booking details (date, address, notes).
-* **Booking Track & Control**: Track service requests; cancel bookings that are pending (`REQUESTED`) or accepted (`ACCEPTED`) but not yet paid.
-* **SSLCommerz Sandbox Payment**: Pay for accepted bookings securely via redirect to the SSLCommerz payment gateway.
-* **Ratings & Reviews**: Rate technicians (1-5 stars) and write comments upon booking completion, automatically recalculating the technician's global metrics.
+### Styling & UI
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Lucide Icons](https://img.shields.io/badge/Lucide_Icons-1.31-pink?style=for-the-badge)
 
-### 🔧 Technician
-* **Profile Configuration**: Set bio details, specialized skills list, and customized hourly rate (BDT).
-* **Service Selection**: Bind/unbind the services they offer from the admin's global catalog.
-* **Availability Toggle**: Set status between Available (Online) and Busy (Offline).
-* **Working Hours Configuration**: Customize opening and closing hours for each day of the week to generate booking time slots dynamically.
-* **Booking Response & Workflow**: Accept/decline booking requests, transition accepted paid jobs to `IN_PROGRESS`, and mark active tasks as `COMPLETED`.
-* **Earnings Overview**: View total accumulated earnings computed from paid, in-progress, and completed bookings.
-
-### 👑 Admin
-* **System Metrics Dashboard**: View key statistics including counts of users, bookings, active categories, revenue, and recent platform bookings.
-* **User & Partner Operations**: Block/unblock users (both customers and technicians) and verify technicians to enable public catalog searches.
-* **Category CRUD**: Create, view, edit, and delete categories (deletions fail if there are linked services).
-* **Service CRUD**: Manage base prices, descriptions, and categories for individual service types (deletions fail if there are active bookings).
-* **Global Bookings**: Search and inspect details of all platform bookings.
+### Libraries & Utilities
+* **Forms Management**: React Hook Form (v7.85.0)
+* **Schema Validation**: Zod (v4.4.3) with `@hookform/resolvers`
+* **API Client**: Axios (v1.19.0) with automatic bearer-token request interceptors
+* **Server-side Security**: Jose (v6.2.8) for checking JWT signatures inside Edge Middleware
+* **Alert Notifications**: React Hot Toast (v2.6.0)
 
 ---
 
-## Setup & Local Installation
+## 🚀 Key Features
 
-### 1. Prerequisites & Cloning
-```bash
-git clone <repository-url>
-cd fixitnow
-```
-
-### 2. Backend Configuration
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install package dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-4. Update the environment variables in `.env`:
-   * `DATABASE_URL`: Connection string for PostgreSQL database
-   * `JWT_SECRET` & `JWT_REFRESH_SECRET`: Cryptographic keys for signing JSON Web Tokens
-   * `ADMIN_EMAIL` & `ADMIN_PASSWORD`: Default superuser credentials
-   * `SSLCOMMERZ_STORE_ID` & `SSLCOMMERZ_STORE_PASSWORD`: Sandbox store credentials
-   * `SSLCOMMERZ_IS_LIVE`: Set to `false` for Sandbox mode
-   * `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: (Optional) Image hosting credentials
-
-5. Generate the Prisma client & sync migrations to your database:
-   ```bash
-   npx prisma generate
-   npx prisma migrate dev
-   ```
-6. Seed default system categories, services, and the admin user:
-   ```bash
-   npx prisma db seed
-   ```
-7. Start the backend development server:
-   ```bash
-   npm run dev
-   ```
-   * *Default backend port: `5000` (`http://localhost:5000/api/v1`)*
-
-### 3. Frontend Configuration
-1. Navigate to the frontend directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install package dependencies:
-   ```bash
-   npm install
-   ```
-3. Setup environment variables in `frontend/.env.local`:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
-   JWT_REFRESH_SECRET=dd6e494c1774fea23c7408e5273763e85d59c7caa78edc2a203903a4f35d2760
-   ```
-   > [!IMPORTANT]
-   > The `JWT_REFRESH_SECRET` must match the value configured in the backend's `.env` for Next.js middleware token checks to succeed.
-4. Run the frontend development server:
-   ```bash
-   npm run dev
-   ```
-   * *Default frontend port: `3000` (`http://localhost:3000`)*
+* **Role-Based Views**: Tailored client workflows, sidebars, and private dashboards for Customers, Technicians, and Admin accounts.
+* **On-the-Fly Slot Booking**: Dynamically parses technician opening/closing schedules to generate available booking time slots while filtering out conflicting, pre-existing jobs.
+* **Secure Payment Integration**: Implements a redirect sequence interfacing with the SSLCommerz sandbox gateway for client-side checkouts.
+* **Interactive Reviews**: Post-service feedback loop that updates technician stats and ratings instantly.
+* **Middleware Route Protection**: Next.js client-side/server-side route validation guarding dashboard layouts from unauthorized roles.
 
 ---
 
-## Test & Demo Credentials
-You can use these pre-configured test credentials to log in without registering a new account:
-
-* **System Admin**:
-  * Email: `admin@fixitnow.com`
-  * Password: `fixitnow!3432134`
-* **Test Customer**:
-  * Email: `tasif.customer@test.com`
-  * Password: `testpassword123`
-* **Test Technician**:
-  * Email: `fahad.technician@test.com`
-  * Password: `testpassword123`
-
----
-
-## Folder Structure (Frontend app layout)
+## 📁 Folder Structure
 
 ```text
 frontend/src/app/
-├── auth/               # Auth pages (login, registration)
+├── auth/               # Access forms (login, registration)
 │   ├── layout.tsx
 │   ├── login/
 │   └── register/
-├── dashboard/          # Private dashboards by role
-│   ├── admin/          # Admin CRUDs, user approvals & stats
-│   ├── customer/       # Customer profile & booking logs
-│   └── technician/     # Technician settings, bookings, schedules & earnings
-├── payment/            # Payment gateway redirects
+├── dashboard/          # Private panels by role
+│   ├── admin/          # User status, verify technicians, CRUD catalogs
+│   ├── customer/       # Booking logs & feedback reviews
+│   └── technician/     # Working hours, job status, earnings
+├── payment/            # Payment gateway callback redirects
 │   ├── success/
 │   ├── failed/
 │   └── cancelled/
-├── services/           # Public service catalogs
+├── services/           # Services catalog and details
 │   ├── page.tsx
 │   └── [id]/
-├── technicians/        # Public technician profiles
+├── technicians/        # Technician list and profiles
 │   ├── page.tsx
 │   └── [id]/
 ├── layout.tsx
-└── page.tsx            # Landing page
+└── page.tsx            # Main landing page
 ```
 
 ---
 
-## Known Limitations & Gaps
-* **No Forgot/Reset Password Route**: Users can change their password when logged in via profile page, but there is no email-based forgot password/reset flow.
-* **Notification System**: State updates (such as payment receipts or technician job confirmations) require manual page refreshes or route changes. Real-time push notifications/WebSockets are not integrated.
-* **Manual Refund Mechanism**: Refunds for cancelled paid appointments must be manually processed in the SSLCommerz merchant console.
-* **Profile Picture Upload UI**: The backend supports file uploads via Cloudinary, but the current frontend form only updates profile text values.
+## ⚙️ Getting Started & Local Setup
+
+To run this frontend client application locally:
+
+### 1. Install Dependencies
+Run the installation command inside the `frontend` root folder:
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+Create a file named `.env.local` inside the `frontend/` root directory and declare the following variables:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+JWT_REFRESH_SECRET=dd6e494c1774fea23c7408e5273763e85d59c7caa78edc2a203903a4f35d2760
+```
+
+> [!IMPORTANT]
+> The `JWT_REFRESH_SECRET` key must match the secret key on your running backend server so the Next.js cryptographic token verification succeeds.
+
+### 3. Launch Development Server
+```bash
+npm run dev
+```
+Once started, open [http://localhost:3000](http://localhost:3000) in your web browser.
