@@ -40,12 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .find(row => row.startsWith('refreshToken='))
         ?.split('=')[1];
 
-      const response = await api.post('/auth/refresh-token', 
+      const response = await api.post('/auth/refresh-token',
         storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
       );
       const { accessToken: token, refreshToken: newRefreshToken } = response.data.data;
-      
-      // Update global Axios authorization header config
+
+      // Clear any bridge state — this session is healthy
+      sessionStorage.removeItem('fin_bridge_attempted');
+
       setAccessToken(token);
       setAccessTokenState(token);
 
@@ -61,22 +63,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profileResponse = await api.get('/users/me');
       setUser(profileResponse.data.data);
     } catch {
-      // Fail silently, as it just means the user is a guest/has no active session cookie
+      // ── Bridge migration path ──────────────────────────────────────────────
+      // If this is the first failure AND we haven't already tried the bridge,
+      // redirect the browser to the backend bridge endpoint. The backend can
+      // read its own HttpOnly cookie (same-origin top-level navigation) and
+      // issue a single-use bridge_code that the frontend then exchanges.
+      const alreadyAttempted = sessionStorage.getItem('fin_bridge_attempted');
+      if (!alreadyAttempted) {
+        sessionStorage.setItem('fin_bridge_attempted', '1');
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ?? '';
+        const returnUrl = encodeURIComponent(window.location.href);
+        window.location.href = `${backendUrl}/api/v1/auth/bridge?return=${returnUrl}`;
+        // Don't call setIsLoading(false) — we're navigating away
+        return;
+      }
+
+      // Bridge already tried (or we came back from a failed bridge) — clean guest state
       setAccessToken(null);
       setAccessTokenState(null);
       setUser(null);
       document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      setIsLoading(false);
     } finally {
+      // Only runs if we didn't return early (bridge redirect case)
       setIsLoading(false);
     }
   };
+
 
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/auth/login', { email, password });
       const { accessToken: token, refreshToken: rToken, user: loggedInUser } = response.data.data;
-      
+
       setAccessToken(token);
       setAccessTokenState(token);
       setUser(loggedInUser);
