@@ -98,7 +98,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
             {technicians.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                {technicians.map((tech: any) => (
+                {technicians.map((tech) => (
                   <Link
                     key={tech.id}
                     href={`/technicians/${tech.id}`}
