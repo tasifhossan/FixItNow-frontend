@@ -15,7 +15,6 @@
  */
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api';
 import { setAccessToken } from '@/lib/api';
@@ -24,7 +23,6 @@ import { useAuth } from '@/context/AuthContext';
 const BRIDGE_ATTEMPTED_KEY = 'fin_bridge_attempted';
 
 export default function BridgeHandler() {
-  const router = useRouter();
   const { refreshSession } = useAuth();
 
   useEffect(() => {
