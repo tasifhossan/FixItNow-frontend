@@ -33,15 +33,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshSession = async () => {
     try {
-      const response = await api.post('/auth/refresh-token');
-      const token = response.data.data.accessToken;
+      // Read stored refresh token from frontend cookie as body fallback
+      // This bypasses cross-origin HttpOnly cookie blocking between Vercel subdomains
+      const storedRefreshToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('refreshToken='))
+        ?.split('=')[1];
+
+      const response = await api.post('/auth/refresh-token', 
+        storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+      );
+      const { accessToken: token, refreshToken: newRefreshToken } = response.data.data;
       
       // Update global Axios authorization header config
       setAccessToken(token);
       setAccessTokenState(token);
 
-      // Save token in frontend cookie for Next.js middleware routing
+      // Save access token in frontend cookie for Next.js middleware routing
       document.cookie = `accessToken=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+
+      // Update stored refresh token if a new one was returned
+      if (newRefreshToken) {
+        document.cookie = `refreshToken=${newRefreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+      }
 
       // Fetch the actual user profile details
       const profileResponse = await api.get('/users/me');
@@ -52,6 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessTokenState(null);
       setUser(null);
       document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } finally {
       setIsLoading(false);
     }
@@ -60,14 +75,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { accessToken: token, user: loggedInUser } = response.data.data;
+      const { accessToken: token, refreshToken: rToken, user: loggedInUser } = response.data.data;
       
       setAccessToken(token);
       setAccessTokenState(token);
       setUser(loggedInUser);
 
-      // Save token in frontend cookie for Next.js middleware routing
+      // Save access token in frontend cookie for Next.js middleware routing
       document.cookie = `accessToken=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+
+      // Save refresh token in frontend-readable cookie for cross-origin refresh fallback
+      if (rToken) {
+        document.cookie = `refreshToken=${rToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+      }
 
       return loggedInUser;
     } catch (error) {
@@ -85,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessTokenState(null);
       setUser(null);
       document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
   };
 
