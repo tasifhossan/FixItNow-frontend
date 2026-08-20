@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import {
   Users,
   Search,
@@ -28,6 +29,7 @@ interface UserRecord {
   isBlocked: boolean;
   createdAt: string;
   avatar?: string;
+  profilePhoto?: string | null;
   displayId?: string;
 }
 
@@ -382,8 +384,20 @@ export default function AdminUsersPage() {
                       {/* User */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${getAvatarColor(idx)}`}>
-                            {getInitials(user.name)}
+                          <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center">
+                            {user.profilePhoto ? (
+                              <Image
+                                src={user.profilePhoto}
+                                alt={user.name}
+                                width={36}
+                                height={36}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center text-xs font-bold ${getAvatarColor(idx)}`}>
+                                {getInitials(user.name)}
+                              </div>
+                            )}
                           </div>
                           <div>
                             <p className="font-semibold text-slate-800 text-sm leading-tight">{user.name}</p>
