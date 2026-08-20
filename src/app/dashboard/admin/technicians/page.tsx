@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   UserCheck,
   ShieldCheck,
@@ -24,6 +25,7 @@ interface TechListItem {
   name: string;
   email: string;
   phone: string | null;
+  profilePhoto: string | null;
   skill: string;
   skills: string[];
   isVerified: boolean;
@@ -116,6 +118,7 @@ export default function AdminTechniciansPage() {
           name: tech.user?.name || 'Unknown',
           email: tech.user?.email || '',
           phone: tech.user?.phone || null,
+          profilePhoto: tech.user?.profilePhoto || null,
           skill: tech.skills?.[0] || 'Technician',
           skills: tech.skills || [],
           isVerified: tech.isVerified,
@@ -285,8 +288,20 @@ export default function AdminTechniciansPage() {
                     <tr key={tech.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
-                            {getInitials(tech.name)}
+                          <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-slate-100">
+                            {tech.profilePhoto ? (
+                              <Image
+                                src={tech.profilePhoto}
+                                alt={tech.name}
+                                width={36}
+                                height={36}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center text-xs font-bold ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
+                                {getInitials(tech.name)}
+                              </div>
+                            )}
                           </div>
                           <div>
                             <p className="font-semibold text-slate-800 text-sm">{tech.name}</p>

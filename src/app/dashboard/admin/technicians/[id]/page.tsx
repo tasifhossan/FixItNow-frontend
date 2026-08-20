@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -35,6 +36,7 @@ interface TechnicianDetails {
   bio: string;
   skills: string[];
   avatarInitials: string;
+  profilePhoto: string | null;
   isVerified: boolean;
 }
 
@@ -73,6 +75,7 @@ export default function TechnicianReviewPage() {
         bio: t.bio || 'No bio provided.',
         skills: t.skills || [],
         avatarInitials: (u.name || 'T').split(' ').map((n: string) => n.charAt(0)).join('').toUpperCase().slice(0, 2),
+        profilePhoto: u.profilePhoto || null,
         isVerified: t.isVerified,
       });
       if (t.isVerified) {
@@ -224,8 +227,20 @@ export default function TechnicianReviewPage() {
           <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-sm">
             {/* Top: Avatar + Info */}
             <div className="flex items-start gap-4 pb-5 border-b border-slate-100">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md">
-                {tech.avatarInitials}
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-md border border-slate-100">
+                {tech.profilePhoto ? (
+                  <Image
+                    src={tech.profilePhoto}
+                    alt={tech.name}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-lg">
+                    {tech.avatarInitials}
+                  </div>
+                )}
               </div>
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-slate-800">{tech.name}</h2>
