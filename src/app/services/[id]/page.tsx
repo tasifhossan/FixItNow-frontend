@@ -101,7 +101,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 {technicians.map((tech) => (
                   <Link
                     key={tech.id}
-                    href={`/technicians/${tech.id}`}
+                    href={`/technicians/${tech.id}?service=${id}`}
                     className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 hover:border-primary bg-white/30 hover:bg-white/60 dark:bg-slate-900/20 dark:hover:bg-slate-900/40 transition-all flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-3">

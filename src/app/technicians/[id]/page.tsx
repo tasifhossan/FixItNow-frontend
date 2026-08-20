@@ -83,8 +83,10 @@ async function ReviewsSection({ technicianId }: { technicianId: string }) {
   }
 }
 
-export default async function TechnicianDetailPage({ params }: PageProps) {
+export default async function TechnicianDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const sParams = await searchParams;
+  const serviceId = typeof sParams?.service === 'string' ? sParams.service : undefined;
 
   let technician;
   try {
@@ -249,6 +251,7 @@ export default async function TechnicianDetailPage({ params }: PageProps) {
               <TechnicianBookingCTA
                 technicianId={technician.id}
                 services={technician.services ?? []}
+                preselectedServiceId={serviceId}
               />
             </div>
           </div>

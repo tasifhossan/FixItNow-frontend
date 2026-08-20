@@ -18,6 +18,7 @@ interface BookingModalProps {
   onClose: () => void;
   technicianId: string;
   services: Array<{ id: string; name: string; basePrice: number }>;
+  preselectedServiceId?: string;
 }
 
 // ─── Zod schema ──────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export default function BookingModal({
   onClose,
   technicianId,
   services,
+  preselectedServiceId,
 }: BookingModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -126,12 +128,17 @@ export default function BookingModal({
   // Reset states on open/close
   useEffect(() => {
     if (isOpen) {
-      reset();
+      reset({
+        serviceId: preselectedServiceId || '',
+        scheduledDate: '',
+        address: '',
+        notes: '',
+      });
       setSelectedDate('');
       setAvailableSlots([]);
       setSelectedSlot('');
     }
-  }, [isOpen, reset]);
+  }, [isOpen, reset, preselectedServiceId]);
 
   // Prevent background scroll while open
   useEffect(() => {

@@ -9,11 +9,13 @@ import BookingModal from './BookingModal';
 interface TechnicianBookingCTAProps {
   technicianId: string;
   services: Array<{ id: string; name: string; basePrice: number }>;
+  preselectedServiceId?: string;
 }
 
 export default function TechnicianBookingCTA({
   technicianId,
   services,
+  preselectedServiceId,
 }: TechnicianBookingCTAProps) {
   const { user, isLoading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,6 +75,7 @@ export default function TechnicianBookingCTA({
         onClose={() => setIsModalOpen(false)}
         technicianId={technicianId}
         services={services}
+        preselectedServiceId={preselectedServiceId}
       />
     </>
   );
